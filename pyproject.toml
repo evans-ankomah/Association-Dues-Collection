@@ -21,3 +21,4 @@ DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py"]
 addopts = "--reuse-db -q"
 testpaths = ["apps"]
+filterwarnings = ["ignore:No directory at:UserWarning"]

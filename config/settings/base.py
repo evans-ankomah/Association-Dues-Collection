@@ -31,6 +31,11 @@ THIRD_PARTY_APPS = [
 ]
 LOCAL_APPS = [
     "apps.common",
+    "apps.institutions",
+    "apps.accounts",
+    "apps.memberships",
+    "apps.access",
+    "apps.audit",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -44,6 +49,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
+    "apps.audit.context.RequestIdMiddleware",
+    "apps.access.middleware.DepartmentContextMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -60,6 +67,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.common.context_processors.site",
+                "apps.access.context_processors.department_context",
             ],
         },
     },
@@ -70,6 +78,12 @@ DATABASES["default"]["ATOMIC_REQUESTS"] = False
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = "accounts.User"
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "accounts:login"
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24  # one day
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

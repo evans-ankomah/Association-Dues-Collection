@@ -1,0 +1,11 @@
+{% include "partials/_switcher.html" with switcher_id="top" %}
+<div x-data="{ open: false }" class="relative">
+  <button type="button" class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100" @click="open = !open" :aria-expanded="open" aria-haspopup="menu">
+    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-brand-700" aria-hidden="true">{{ user.get_short_name|first|upper }}</span>
+    <span class="hidden xl:inline">{{ user.display_name }}</span>
+  </button>
+  <div x-show="open" x-cloak @click.outside="open = false" class="absolute right-0 z-20 mt-2 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg" role="menu">
+    <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm hover:bg-slate-50" role="menuitem">Profile</a>
+    <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="block w-full px-4 py-2 text-left text-sm hover:bg-slate-50" role="menuitem">Sign out</button></form>
+  </div>
+</div>

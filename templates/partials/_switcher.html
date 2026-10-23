@@ -1,0 +1,19 @@
+<form method="post" action="{% url 'access:switch' %}" class="{{ switcher_class|default:'flex items-center gap-2' }} text-sm" x-data @change="$el.submit()">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  {% if available_departments|length > 1 %}
+  <label for="ctx-department-{{ switcher_id }}" class="sr-only">Department</label>
+  <select id="ctx-department-{{ switcher_id }}" name="department" class="field-input py-1.5 lg:w-auto">
+    {% for d in available_departments %}<option value="{{ d.pk }}" {% if d.pk == current_department.pk %}selected{% endif %}>{{ d }}</option>{% endfor %}
+  </select>
+  {% elif current_department %}
+  <span class="font-medium text-slate-700">{{ current_department }}</span>
+  {% endif %}
+  {% if available_sessions %}
+  <label for="ctx-session-{{ switcher_id }}" class="sr-only">Academic session</label>
+  <select id="ctx-session-{{ switcher_id }}" name="academic_session" class="field-input py-1.5 lg:w-auto">
+    {% for s in available_sessions %}<option value="{{ s.pk }}" {% if s.pk == current_session.pk %}selected{% endif %}>{{ s }}{% if s.is_current %} (current){% endif %}</option>{% endfor %}
+  </select>
+  {% endif %}
+  <noscript><button type="submit" class="btn btn-secondary py-1.5">Switch</button></noscript>
+</form>

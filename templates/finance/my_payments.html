@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}My payments · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% include "partials/_page_header.html" with title="My payments" subtitle=current_department %}
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="space-y-3 lg:col-span-2">
+    {% for p in payments %}
+    <article class="card flex flex-wrap items-center justify-between gap-4 p-4">
+      <div class="min-w-0">
+        <a href="{% url 'finance:payment' p.pk %}" class="font-medium text-brand-700 hover:underline">{{ p.amount|money:p.currency }} · {{ p.method_label }}</a>
+        <p class="text-sm text-slate-600">{{ p.initiated_at|date:"j M Y" }}{% if p.external_reference %} · ref {{ p.external_reference }}{% endif %}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        {% status_badge p.payment_status %}
+        {% if p.receipt %}<a href="{% url 'finance:receipt_pdf' p.receipt.pk %}" class="btn btn-secondary py-1.5">Receipt PDF</a>{% endif %}
+      </div>
+    </article>
+    {% empty %}
+    <div class="card p-10 text-center text-sm text-slate-500">No payments yet.</div>
+    {% endfor %}
+  </section>
+
+  {% if can_report %}
+  <aside>
+    <form method="post" class="card space-y-4 p-4" novalidate x-data="{ method: '{{ form.method.value|default:'mobile_money' }}' }">
+      {% csrf_token %}
+      <div>
+        <h2 class="text-sm font-semibold text-slate-700">Paid by MoMo or bank transfer?</h2>
+        <p class="mt-1 text-xs text-slate-600">You owe {{ outstanding_total|money }}. Tell us the transaction ID and the Treasurer will confirm it and send your receipt.</p>
+      </div>
+      {% include "partials/_form_errors.html" %}
+      {% include "finance/partials/_payment_fields.html" %}
+      <button class="btn btn-primary w-full">Send for confirmation</button>
+    </form>
+  </aside>
+  {% endif %}
+</div>
+{% endblock %}

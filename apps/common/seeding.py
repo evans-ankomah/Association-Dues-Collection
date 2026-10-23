@@ -42,9 +42,7 @@ def flush(registry=None):
     registry = registry or table_registry()
     from apps.common.models import TimeStampedModel
 
-    tables = [
-        name for name, model in registry.items() if issubclass(model, TimeStampedModel)
-    ]
+    tables = [name for name, model in registry.items() if issubclass(model, TimeStampedModel)]
     if tables:
         quoted = ", ".join(connection.ops.quote_name(t) for t in tables)
         with connection.cursor() as cursor:

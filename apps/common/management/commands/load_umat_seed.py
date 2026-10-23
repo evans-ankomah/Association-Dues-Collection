@@ -31,9 +31,7 @@ class Command(BaseCommand):
             raise CommandError("Refusing to load sample data with DEBUG off. Pass --allow-non-debug if sure.")
         seed_dir = Path(options["dir"])
         if not (seed_dir / "users.json").exists():
-            raise CommandError(
-                f"No seed data in {seed_dir}. Generate it first: python seed/generate_umat.py"
-            )
+            raise CommandError(f"No seed data in {seed_dir}. Generate it first: python seed/generate_umat.py")
 
         if options["flush"]:
             seeding.flush()

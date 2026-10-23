@@ -40,9 +40,11 @@ def _catalog_models():
 def flush(registry=None):
     """Delete all data in DeptHub tables (keeps migrations), then reinstall the role catalogue."""
     registry = registry or table_registry()
-    from apps.common.models import TimeStampedModel
-
-    tables = [name for name, model in registry.items() if issubclass(model, TimeStampedModel)]
+    tables = [
+        name
+        for name, model in registry.items()
+        if model._meta.managed and model.__module__.startswith("apps.")
+    ]
     if tables:
         quoted = ", ".join(connection.ops.quote_name(t) for t in tables)
         with connection.cursor() as cursor:

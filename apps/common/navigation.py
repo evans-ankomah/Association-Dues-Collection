@@ -14,8 +14,25 @@ class NavItem:
     platform_admin_only: bool = False
 
 
+FINANCE_VIEWERS = (
+    "dues.assessment.create",
+    "dues.waiver.approve",
+    "finance.payment.record",
+    "finance.payment.verify",
+    "finance.reconciliation.view",
+    "finance.report.export",
+)
+
 NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
-    ("", [NavItem("Home", "home")]),
+    ("", [NavItem("Home", "home"), NavItem("My dues", "finance:my_dues", ("dues.own.view",))]),
+    (
+        "Finance",
+        [
+            NavItem("Dues", "finance:dues_types", FINANCE_VIEWERS),
+            NavItem("Waivers", "finance:waivers", ("dues.waiver.approve", "dues.assessment.create")),
+        ],
+    ),
+    ("Members", [NavItem("Roster", "members:roster", ("members.roster.view", "members.roster.edit"))]),
     ("Account", [NavItem("Profile", "accounts:profile")]),
     ("Administration", [NavItem("Platform admin", "admin:index", platform_admin_only=True)]),
 ]

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ dues_type.name }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <a href="{% url 'finance:dues_types' %}" class="text-sm text-brand-700 hover:underline">← Dues</a>
+    <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ dues_type.name }} {% status_badge dues_type.status %}</h1>
+    <p class="mt-1 text-sm text-slate-600">{{ dues_type.default_amount|money:dues_type.currency }} · due {{ dues_type.due_date|date:"j M Y"|default:"—" }} · {{ dues_type.academic_session }}</p>
+  </div>
+  {% if can_manage %}
+  <div class="flex flex-wrap gap-2">
+    {% if dues_type.can_assess %}<a href="{% url 'finance:assess' dues_type.pk %}" class="btn btn-primary">Assess members</a>{% endif %}
+    <a href="{% url 'finance:dues_type_edit' dues_type.pk %}" class="btn btn-secondary">Edit</a>
+    <form method="post" action="{% url 'finance:dues_type_status' dues_type.pk %}">
+      {% csrf_token %}
+      {% if dues_type.status == "active" %}<button name="status" value="closed" class="btn btn-secondary">Close</button>
+      {% elif dues_type.status == "closed" %}<button name="status" value="active" class="btn btn-secondary">Reopen</button>
+      {% elif dues_type.status == "draft" %}<button name="status" value="cancelled" class="btn btn-secondary">Cancel</button>{% endif %}
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+{% if dues_type.description %}<p class="mb-6 max-w-3xl text-sm text-slate-700">{{ dues_type.description }}</p>{% endif %}
+
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
+  {% include "partials/_stat.html" with label="Members assessed" value=totals.count %}
+  {% include "partials/_stat.html" with label="Assessed" value=totals.assessed|money %}
+  {% include "partials/_stat.html" with label="Waived" value=totals.waived|money %}
+  {% include "partials/_stat.html" with label="Collected" value=totals.paid|money value_class="text-brand-700" %}
+  {% include "partials/_stat.html" with label="Outstanding" value=totals.outstanding|money value_class="text-amber-700" hint=totals.collection_rate|percent %}
+</div>
+
+<form method="get" class="mt-6 flex flex-wrap items-end gap-3">
+  <div class="min-w-48 flex-1"><label for="q" class="field-label">Search</label><input id="q" name="q" value="{{ filters.q }}" class="field-input" placeholder="Name, email or student number"></div>
+  <div><label for="status" class="field-label">Status</label>
+    <select id="status" name="status" class="field-input"><option value="">All</option>{% for key, label in statuses.items %}<option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div><label for="level" class="field-label">Level</label>
+    <select id="level" name="level" class="field-input"><option value="">All</option>{% for lv in levels %}<option {% if filters.level == lv %}selected{% endif %}>{{ lv }}</option>{% endfor %}</select></div>
+  <button class="btn btn-secondary">Filter</button>
+</form>
+
+<div class="card mt-4 overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Member</th><th>Student no.</th><th>Level</th><th class="text-right">Assessed</th><th class="text-right">Paid</th><th class="text-right">Balance</th><th>Status</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in page %}
+      {% with p=a.department_membership.user.profile %}
+      <tr class="hover:bg-slate-50">
+        <td><a href="{% url 'finance:assessment' a.pk %}" class="font-medium text-brand-700 hover:underline">{{ p.full_name|default:a.department_membership.user.email }}</a></td>
+        <td class="tabular-nums">{{ p.student_number|default:"—" }}</td>
+        <td>{{ a.department_membership.level_code|default:"—" }}</td>
+        <td class="text-right tabular-nums">{{ a.amount_assessed|money }}</td>
+        <td class="text-right tabular-nums">{{ a.amount_paid|money }}</td>
+        <td class="text-right tabular-nums">{{ a.balance|money }}</td>
+        <td>{% status_badge a.derived_status %}</td>
+      </tr>
+      {% endwith %}
+      {% empty %}
+      <tr><td colspan="7" class="py-10 text-center text-slate-500">No assessments match.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

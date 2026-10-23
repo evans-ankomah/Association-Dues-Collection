@@ -5,7 +5,9 @@ cd "$(dirname "$0")/.."
 
 if [ -x .venv/Scripts/python ]; then BIN=.venv/Scripts; else BIN=.venv/bin; fi
 
-echo "== lint";        "$BIN/ruff" check . && "$BIN/ruff" format --check .
+echo "== lint"
+"$BIN/ruff" check .
+"$BIN/ruff" format --check .
 echo "== migrations";  "$BIN/python" manage.py makemigrations --check --dry-run
 echo "== deploy check"
 DJANGO_SETTINGS_MODULE=config.settings.prod ALLOWED_HOSTS=example.com \

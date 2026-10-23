@@ -12,5 +12,7 @@ urlpatterns = [
     path("healthz/", healthz, name="healthz"),
     path("accounts/", include("apps.accounts.urls")),
     path("context/", include("apps.access.urls")),
+    path("finance/", include("apps.finance.urls")),
+    path("members/", include("apps.memberships.urls")),
     path("django-admin/", admin.site.urls),
 ]

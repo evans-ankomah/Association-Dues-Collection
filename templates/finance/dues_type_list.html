@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Dues · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Dues</h1>
+    <p class="mt-1 text-sm text-slate-600">{{ current_department }} · {{ current_session }}</p>
+  </div>
+  {% if can_manage %}<a href="{% url 'finance:dues_type_create' %}" class="btn btn-primary">New dues type</a>{% endif %}
+</div>
+
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="Assessed" value=overall.assessed|money %}
+  {% include "partials/_stat.html" with label="Collected" value=overall.paid|money value_class="text-brand-700" %}
+  {% include "partials/_stat.html" with label="Outstanding" value=overall.outstanding|money value_class="text-amber-700" %}
+  {% include "partials/_stat.html" with label="Collection rate" value=overall.collection_rate|percent hint="Collected ÷ (assessed − waived)" %}
+</div>
+
+<div class="card mt-6 overflow-x-auto">
+  <table class="table-base">
+    <thead>
+      <tr><th>Dues type</th><th>Status</th><th>Due</th><th class="text-right">Members</th><th class="text-right">Assessed</th><th class="text-right">Collected</th><th class="text-right">Outstanding</th><th class="text-right">Rate</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for row in rows %}
+      <tr class="hover:bg-slate-50">
+        <td><a href="{% url 'finance:dues_type' row.type.pk %}" class="font-medium text-brand-700 hover:underline">{{ row.type.name }}</a>
+          <p class="text-xs text-slate-500">{{ row.type.get_category_display }}{% if not row.type.is_mandatory %} · optional{% endif %}</p></td>
+        <td>{% status_badge row.type.status %}</td>
+        <td>{{ row.type.due_date|date:"j M Y"|default:"—" }}</td>
+        <td class="text-right tabular-nums">{{ row.totals.count }}</td>
+        <td class="text-right tabular-nums">{{ row.totals.assessed|money }}</td>
+        <td class="text-right tabular-nums">{{ row.totals.paid|money }}</td>
+        <td class="text-right tabular-nums">{{ row.totals.outstanding|money }}</td>
+        <td class="text-right tabular-nums">{{ row.totals.collection_rate|percent }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="py-10 text-center text-slate-500">No dues set up for this session yet.{% if can_manage %} <a href="{% url 'finance:dues_type_create' %}" class="text-brand-700 hover:underline">Create the first one</a>.{% endif %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -24,11 +24,19 @@ FINANCE_VIEWERS = (
 )
 
 NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
-    ("", [NavItem("Home", "home"), NavItem("My dues", "finance:my_dues", ("dues.own.view",))]),
+    (
+        "",
+        [
+            NavItem("Home", "home"),
+            NavItem("My dues", "finance:my_dues", ("dues.own.view",)),
+            NavItem("My payments", "finance:my_payments", ("dues.own.view", "finance.receipt.view")),
+        ],
+    ),
     (
         "Finance",
         [
             NavItem("Dues", "finance:dues_types", FINANCE_VIEWERS),
+            NavItem("Payments", "finance:payments", FINANCE_VIEWERS),
             NavItem("Waivers", "finance:waivers", ("dues.waiver.approve", "dues.assessment.create")),
         ],
     ),

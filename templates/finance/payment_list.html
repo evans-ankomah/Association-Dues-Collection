@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Payments · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Payments</h1>
+    <p class="mt-1 text-sm text-slate-600">{{ current_department }}{% if pending_count %} · <a href="?status=pending" class="text-amber-700 hover:underline">{{ pending_count }} waiting for verification</a>{% endif %}</p>
+  </div>
+  {% if can_record %}<a href="{% url 'finance:record_payment' %}" class="btn btn-primary">Record a payment</a>{% endif %}
+</div>
+
+<form method="get" class="flex flex-wrap items-end gap-3">
+  <div class="min-w-48 flex-1"><label for="q" class="field-label">Search</label><input id="q" name="q" value="{{ filters.q }}" class="field-input" placeholder="Name, student number, reference or receipt"></div>
+  <div><label for="status" class="field-label">Status</label>
+    <select id="status" name="status" class="field-input"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div><label for="method" class="field-label">Method</label>
+    <select id="method" name="method" class="field-input"><option value="">All</option>{% for v, l in methods %}<option value="{{ v }}" {% if filters.method == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <button class="btn btn-secondary">Filter</button>
+</form>
+
+<div class="card mt-4 overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Date</th><th>Payer</th><th>Method</th><th>Reference</th><th>Status</th><th class="text-right">Amount</th><th>Receipt</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for p in page %}
+      <tr class="hover:bg-slate-50">
+        <td><a href="{% url 'finance:payment' p.pk %}" class="text-brand-700 hover:underline">{{ p.initiated_at|date:"j M Y" }}</a></td>
+        <td>{{ p.payer_membership.user.profile.full_name|default:"—" }}<p class="text-xs text-slate-500">{{ p.payer_membership.user.profile.student_number|default:"" }}</p></td>
+        <td>{{ p.method_label }}</td>
+        <td class="max-w-40 truncate tabular-nums">{{ p.external_reference|default:p.provider_reference|default:"—" }}</td>
+        <td>{% status_badge p.payment_status %}</td>
+        <td class="text-right tabular-nums">{{ p.amount|money:p.currency }}</td>
+        <td>{% if p.receipt %}<a href="{% url 'finance:receipt' p.receipt.pk %}" class="text-brand-700 hover:underline">{{ p.receipt.receipt_number }}</a>{% else %}—{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="py-10 text-center text-slate-500">No payments match.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

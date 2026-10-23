@@ -5,9 +5,14 @@
 {% block content %}
 {% include "partials/_page_header.html" with title="My dues" subtitle=current_department %}
 
-<div class="grid gap-4 sm:grid-cols-2">
+<div class="grid gap-4 sm:grid-cols-3">
   {% include "partials/_stat.html" with label="You owe" value=outstanding|money value_class="text-amber-700" %}
   {% if overdue %}{% include "partials/_stat.html" with label="Overdue" value=overdue|length hint="Past the due date" value_class="text-red-700" %}{% endif %}
+  {% if outstanding > 0 %}
+  <div class="card flex flex-col justify-center gap-2 p-4">
+    {% block pay_actions %}<a href="{% url 'finance:my_payments' %}" class="btn btn-primary">Report a MoMo or bank payment</a>{% endblock %}
+  </div>
+  {% endif %}
 </div>
 
 {% for group in sessions %}

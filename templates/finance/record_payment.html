@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Record a payment · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'finance:payments' as back %}
+{% include "partials/_page_header.html" with title="Record a payment" subtitle="For cash, or MoMo and bank transfers made directly to the association." back_url=back back_label="Payments" %}
+
+<form method="post" class="card max-w-2xl space-y-5 p-6" novalidate x-data="{ method: '{{ form.method.value|default:'cash' }}' }">
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  <div>
+    <label for="member-search" class="field-label">Member <span class="text-red-600" aria-hidden="true">*</span></label>
+    {% if selected %}
+    <label class="mb-2 flex items-center gap-3 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm">
+      <input type="radio" name="membership" value="{{ selected.pk }}" checked class="h-4 w-4 text-brand-600">
+      {{ selected.user.profile.full_name }} · {{ selected.user.profile.student_number|default:selected.user.email }}
+    </label>
+    {% endif %}
+    <input id="member-search" type="search" class="field-input" placeholder="Type a name, email or student number" autocomplete="off"
+      name="q" hx-get="{% url 'finance:member_search' %}" hx-trigger="input changed delay:300ms, search" hx-target="#member-results">
+    <div id="member-results" class="mt-2" aria-live="polite"></div>
+    {% for e in form.membership.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+  </div>
+  {% include "finance/partials/_payment_fields.html" %}
+  <p class="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">The payment stays <strong>pending</strong> until the Treasurer checks it against the cash box, MoMo wallet or bank statement. The receipt is issued at that point.</p>
+  <div class="flex gap-3">
+    <button type="submit" class="btn btn-primary">Record payment</button>
+    <a href="{{ back }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

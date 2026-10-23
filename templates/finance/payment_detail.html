@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Payment · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% with prof=payment.payer_membership.user.profile %}
+<div class="mb-6">
+  {% if is_payer %}<a href="{% url 'finance:my_payments' %}" class="text-sm text-brand-700 hover:underline">← My payments</a>
+  {% else %}<a href="{% url 'finance:payments' %}" class="text-sm text-brand-700 hover:underline">← Payments</a>{% endif %}
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold tabular-nums">{{ payment.amount|money:payment.currency }} {% status_badge payment.payment_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ payment.method_label }}{% if not is_payer and prof %} · {{ prof.full_name }} ({{ prof.student_number|default:payment.payer_membership.user.email }}){% endif %}</p>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <section class="card p-4">
+      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        <div><dt class="text-slate-500">Reference</dt><dd class="font-medium tabular-nums">{{ payment.external_reference|default:payment.provider_reference|default:"—" }}</dd></div>
+        <div><dt class="text-slate-500">Reported</dt><dd>{{ payment.initiated_at|date:"j M Y, H:i" }}{% if payment.recorded_by and not is_payer %} by {{ payment.recorded_by.display_name }}{% endif %}</dd></div>
+        <div><dt class="text-slate-500">Confirmed</dt><dd>{{ payment.confirmed_at|date:"j M Y, H:i"|default:"—" }}{% if payment.verified_by and not is_payer %} by {{ payment.verified_by.display_name }}{% endif %}</dd></div>
+        <div><dt class="text-slate-500">Receipt</dt><dd>{% if receipt %}<a href="{% url 'finance:receipt' receipt.pk %}" class="font-medium text-brand-700 hover:underline">{{ receipt.receipt_number }}</a>{% else %}Issued once confirmed{% endif %}</dd></div>
+        {% if payment.notes %}<div class="sm:col-span-2"><dt class="text-slate-500">Notes</dt><dd class="whitespace-pre-line">{{ payment.notes }}</dd></div>{% endif %}
+      </dl>
+    </section>
+
+    {% if payment.is_confirmed %}
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Applied to</h2>
+      <table class="table-base mt-2">
+        <thead><tr><th>Dues</th><th>Session</th><th class="text-right">Amount</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for al in allocations %}
+          <tr><td><a href="{% url 'finance:assessment' al.dues_assessment.pk %}" class="text-brand-700 hover:underline">{{ al.dues_assessment.dues_type.name }}</a></td>
+            <td>{{ al.dues_assessment.department_membership.academic_session }}</td><td class="text-right tabular-nums">{{ al.amount_allocated|money }}</td></tr>
+          {% empty %}
+          <tr><td colspan="3" class="py-6 text-center text-slate-500">Not applied to any dues.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if unallocated > 0 %}<p class="border-t border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{{ unallocated|money }} of this payment isn't applied to any dues. Consider a refund, or apply it when new dues are assessed.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if can_verify %}
+    <form method="post" action="{% url 'finance:verify_payment' payment.pk %}" class="card space-y-4 p-4">
+      {% csrf_token %}
+      <div>
+        <h2 class="text-sm font-semibold text-slate-700">Verify and apply</h2>
+        <p class="mt-1 text-xs text-slate-600">Check the reference against the {{ payment.method_label }} statement first. Amounts are pre-filled oldest due first; adjust if the member asked otherwise.</p>
+      </div>
+      {% if outstanding %}
+      <div class="overflow-x-auto">
+        <table class="table-base">
+          <thead><tr><th>Dues</th><th>Due</th><th class="text-right">Balance</th><th class="text-right">Apply</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for a in outstanding %}
+            <tr><td>{{ a.dues_type.name }}<p class="text-xs text-slate-500">{{ a.department_membership.academic_session }}</p></td>
+              <td>{{ a.due_date|date:"j M Y"|default:"—" }}</td><td class="text-right tabular-nums">{{ a.balance|money }}</td>
+              <td class="text-right"><label class="sr-only" for="alloc_{{ a.pk }}">Apply to {{ a.dues_type.name }}</label>
+                <input id="alloc_{{ a.pk }}" name="alloc_{{ a.pk }}" type="number" step="0.01" min="0" max="{{ a.balance }}" value="{{ a.suggested }}" class="field-input w-28 text-right"></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-sm text-amber-800">This member has no outstanding dues. Confirming will leave the whole amount unapplied.</p>
+      {% endif %}
+      <button class="btn btn-primary">Confirm payment and issue receipt</button>
+    </form>
+
+    <form method="post" action="{% url 'finance:reject_payment' payment.pk %}" class="card space-y-3 p-4" x-data="{ open: false }">
+      {% csrf_token %}
+      <button type="button" class="text-sm font-medium text-red-700 hover:underline" @click="open = !open">Can't find this payment on the statement?</button>
+      <div x-show="open" x-cloak class="space-y-3">
+        {% include "partials/_field.html" with field=reject_form.reason %}
+        <button class="btn btn-danger">Mark as failed</button>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if can_cancel %}
+    <form method="post" action="{% url 'finance:cancel_payment' payment.pk %}" onsubmit="return confirm('Withdraw this payment?')">
+      {% csrf_token %}<button class="btn btn-secondary">Withdraw this payment</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if history %}
+  <aside class="card h-fit p-4">
+    <h2 class="text-sm font-semibold text-slate-700">History</h2>
+    <ol class="mt-3 space-y-3 border-l border-slate-200 pl-4 text-sm">
+      {% for e in history %}
+      <li><p class="font-medium">{{ e.action_key|cut:"payment."|capfirst }}</p><p class="text-xs text-slate-500">{{ e.occurred_at|date:"j M Y, H:i" }}{% if e.actor_user %} · {{ e.actor_user.display_name }}{% endif %}</p></li>
+      {% endfor %}
+    </ol>
+  </aside>
+  {% endif %}
+</div>
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,18 @@
+<fieldset>
+  <legend class="field-label">How was it paid?</legend>
+  <div class="flex flex-wrap gap-3">
+    {% for option in form.method %}
+    <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+      <input type="radio" name="{{ option.data.name }}" value="{{ option.data.value }}" x-model="method" {% if option.data.selected %}checked{% endif %} class="h-4 w-4 text-brand-600"> {{ option.choice_label }}
+    </label>
+    {% endfor %}
+  </div>
+  {% for e in form.method.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+</fieldset>
+<div x-show="method === 'mobile_money'" x-cloak>{% include "partials/_field.html" with field=form.network %}</div>
+<div x-show="method === 'bank_transfer'" x-cloak>{% include "partials/_field.html" with field=form.bank_name %}</div>
+<div class="grid gap-4 sm:grid-cols-2">
+  {% include "partials/_field.html" with field=form.amount %}
+  <div x-show="method !== 'cash'">{% include "partials/_field.html" with field=form.reference %}</div>
+</div>
+{% include "partials/_field.html" with field=form.notes %}

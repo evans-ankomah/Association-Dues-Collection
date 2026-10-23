@@ -1,0 +1,15 @@
+{% if results %}
+<ul class="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white" role="listbox" aria-label="Matching members">
+  {% for m in results %}
+  <li>
+    <label class="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm hover:bg-slate-50">
+      <input type="radio" name="membership" value="{{ m.pk }}" class="h-4 w-4 text-brand-600" required>
+      <span class="min-w-0"><span class="font-medium">{{ m.user.profile.full_name|default:m.user.email }}</span>
+        <span class="block text-xs text-slate-500">{{ m.user.profile.student_number|default:m.user.email }} · {{ m.level_code|default:"" }} · {{ m.academic_session }}</span></span>
+    </label>
+  </li>
+  {% endfor %}
+</ul>
+{% elif term|length >= 2 %}
+<p class="text-sm text-slate-500">No members match “{{ term }}”.</p>
+{% endif %}

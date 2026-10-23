@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import dues, member, waivers
+from .views import dues, member, payments, waivers
 
 app_name = "finance"
 
@@ -17,4 +17,14 @@ urlpatterns = [
     path("assessments/<uuid:pk>/cancel/", dues.cancel_assessment, name="cancel_assessment"),
     path("waivers/", waivers.waiver_list, name="waivers"),
     path("waivers/<uuid:pk>/decide/", waivers.decide_waiver, name="decide_waiver"),
+    path("my-payments/", payments.my_payments, name="my_payments"),
+    path("payments/", payments.payment_list, name="payments"),
+    path("payments/record/", payments.record_payment, name="record_payment"),
+    path("payments/member-search/", payments.member_search, name="member_search"),
+    path("payments/<uuid:pk>/", payments.payment_detail, name="payment"),
+    path("payments/<uuid:pk>/verify/", payments.verify_payment, name="verify_payment"),
+    path("payments/<uuid:pk>/reject/", payments.reject_payment, name="reject_payment"),
+    path("payments/<uuid:pk>/cancel/", payments.cancel_payment, name="cancel_payment"),
+    path("receipts/<uuid:pk>/", payments.receipt_detail, name="receipt"),
+    path("receipts/<uuid:pk>/pdf/", payments.receipt_pdf, name="receipt_pdf"),
 ]

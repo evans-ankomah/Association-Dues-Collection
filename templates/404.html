@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Page not found{% endblock %}
+
+{% block public_content %}{% include "partials/_error.html" with code="404" heading="Page not found" text="The page you're looking for doesn't exist or has moved." %}{% endblock %}
+{% block content %}{% include "partials/_error.html" with code="404" heading="Page not found" text="The page you're looking for doesn't exist or has moved." %}{% endblock %}

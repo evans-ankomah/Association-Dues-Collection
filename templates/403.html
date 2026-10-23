@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Access denied{% endblock %}
+
+{% block public_content %}{% include "partials/_error.html" with code="403" heading="Access denied" text="You don't have permission to view this page." %}{% endblock %}
+{% block content %}{% include "partials/_error.html" with code="403" heading="Access denied" text="You don't have permission to view this page. If you think this is wrong, contact your department administrator." %}{% endblock %}

@@ -1,4 +1,7 @@
 <a href="{% url 'home' %}" class="mb-6 block px-3 text-lg font-semibold text-brand-700">{{ SITE_NAME|default:"DeptHub" }}</a>
+<div class="mb-6 px-1 lg:hidden">
+  {% include "partials/_switcher.html" with switcher_id="drawer" switcher_class="flex flex-col gap-2" %}
+</div>
 <nav class="flex-1 space-y-6" aria-label="Main">
   {% for section in nav_sections %}
   <div>
@@ -11,3 +14,8 @@
   </div>
   {% endfor %}
 </nav>
+<div class="mt-6 border-t border-slate-200 pt-4">
+  <p class="truncate px-3 text-sm font-medium text-slate-700">{{ user.display_name }}</p>
+  <p class="truncate px-3 text-xs text-slate-500">{{ user.email }}</p>
+  <form method="post" action="{% url 'accounts:logout' %}" class="mt-2">{% csrf_token %}<button type="submit" class="nav-link w-full">Sign out</button></form>
+</div>

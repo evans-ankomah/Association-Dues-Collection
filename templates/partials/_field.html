@@ -1,0 +1,14 @@
+{% if field.is_hidden %}{{ field }}{% elif field.widget_type == "checkbox" %}
+<div class="flex items-start gap-3">
+  <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" {% if field.value %}checked{% endif %}{% if field.errors %} aria-invalid="true"{% endif %}>
+  <label for="{{ field.id_for_label }}" class="text-sm text-slate-700">{{ field.label }}</label>
+</div>
+{% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+{% else %}
+<div>
+  <label for="{{ field.id_for_label }}" class="field-label">{{ field.label }}{% if field.field.required %} <span class="text-red-600" aria-hidden="true">*</span>{% endif %}</label>
+  {{ field }}
+  {% if field.help_text %}<p class="mt-1 text-xs text-slate-500">{{ field.help_text|safe }}</p>{% endif %}
+  {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+</div>
+{% endif %}

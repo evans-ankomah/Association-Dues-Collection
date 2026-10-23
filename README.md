@@ -28,6 +28,29 @@ Open http://localhost:8000. The health check is at `/healthz/`.
 
 PostgreSQL is exposed on port **5433** so it doesn't clash with a locally installed PostgreSQL on 5432.
 
+## Demo data
+
+The `seed/` folder generates an anonymised dataset for UMaT's Computer Science & Engineering department: two sessions, about 525 students, elected executives, staff, dues, payments and receipts.
+
+```bash
+python seed/generate_umat.py      # writes seed/output/
+python manage.py load_umat_seed   # add --flush to replace existing data
+```
+
+Every seeded account uses the password `depthub-demo-2026` (change it with `--password`). Some accounts to try:
+
+| Role | Email |
+|---|---|
+| Student | `eunice.ankrah75@st.umat.test` |
+| Financial Secretary | `issah.ziem62@st.umat.test` |
+| Treasurer | `abdulrashid.bawah77@st.umat.test` |
+| Department President | `kwaku.duah97@st.umat.test` |
+| HoD / Faculty Adviser | `equansah@umat.test` |
+| Auditor | `bkoomson@umat.test` |
+| Platform Administrator | `ioforiatta@umat.test` |
+
+These emails come from the default generator seed (`--seed 2026`). The sample phone numbers use real Ghanaian network prefixes, so keep `SMS_BACKEND=disabled` whenever this data is loaded. The loader refuses to run when `DEBUG` is off.
+
 ## Everyday commands
 
 | Task | Command |

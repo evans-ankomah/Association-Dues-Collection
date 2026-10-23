@@ -1,0 +1,15 @@
+{
+  "name": "depthub-frontend",
+  "private": true,
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "build": "npm run vendor && tailwindcss -i static/src/app.css -o static/css/app.css --minify",
+    "dev": "tailwindcss -i static/src/app.css -o static/css/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "alpinejs": "3.17.5",
+    "htmx.org": "2.0.11",
+    "tailwindcss": "4.3.3"
+  }
+}

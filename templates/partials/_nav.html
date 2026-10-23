@@ -1,0 +1,13 @@
+<a href="{% url 'home' %}" class="mb-6 block px-3 text-lg font-semibold text-brand-700">{{ SITE_NAME|default:"DeptHub" }}</a>
+<nav class="flex-1 space-y-6" aria-label="Main">
+  {% for section in nav_sections %}
+  <div>
+    {% if section.title %}<p class="px-3 pb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">{{ section.title }}</p>{% endif %}
+    <ul class="space-y-1">
+      {% for item in section.items %}
+      <li><a href="{{ item.url }}" class="nav-link {% if item.active %}nav-link-active{% endif %}" {% if item.active %}aria-current="page"{% endif %}>{{ item.label }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</nav>

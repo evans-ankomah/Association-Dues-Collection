@@ -42,3 +42,4 @@ Thumbs.db
 
 # Generated sample data (rebuild with: python seed/generate_umat.py)
 seed/output/
+static/vendor/

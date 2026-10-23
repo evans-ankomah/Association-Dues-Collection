@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Members · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% include "partials/_page_header.html" with title="Members" subtitle=current_session %}
+
+<form method="get" class="flex flex-wrap items-end gap-3">
+  <div class="min-w-48 flex-1"><label for="q" class="field-label">Search</label><input id="q" name="q" value="{{ filters.q }}" class="field-input" placeholder="Name, email or student number"></div>
+  <div><label for="level" class="field-label">Level</label>
+    <select id="level" name="level" class="field-input"><option value="">All</option>{% for lv in levels %}<option {% if filters.level == lv %}selected{% endif %}>{{ lv }}</option>{% endfor %}</select></div>
+  <div><label for="status" class="field-label">Membership</label>
+    <select id="status" name="status" class="field-input"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <label class="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" name="owing" value="1" {% if filters.owing %}checked{% endif %} class="h-4 w-4 rounded border-slate-300"> Owing only</label>
+  <button class="btn btn-secondary">Filter</button>
+</form>
+<p class="mt-3 text-sm text-slate-600">{{ page.paginator.count }} of {{ total_members }} member{{ total_members|pluralize }}</p>
+
+<div class="card mt-2 overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Name</th><th>Student no.</th><th>Level</th><th>Programme</th><th>Membership</th><th class="text-right">Outstanding</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for m in page %}
+      <tr class="hover:bg-slate-50">
+        <td><a href="{% url 'members:detail' m.pk %}" class="font-medium text-brand-700 hover:underline">{{ m.user.profile.full_name|default:m.user.email }}</a></td>
+        <td class="tabular-nums">{{ m.user.profile.student_number|default:"—" }}</td>
+        <td>{{ m.level_code|default:"—" }}</td>
+        <td class="max-w-64 truncate">{{ m.programme_name|default:"—" }}</td>
+        <td>{% status_badge m.membership_status %}</td>
+        <td class="text-right tabular-nums {% if m.outstanding > 0 %}text-amber-700{% endif %}">{{ m.outstanding|money }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="py-10 text-center text-slate-500">No members match.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

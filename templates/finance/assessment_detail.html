@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ assessment.dues_type.name }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% with m=assessment.department_membership p=assessment.department_membership.user.profile %}
+<div class="mb-6">
+  {% if is_own %}<a href="{% url 'finance:my_dues' %}" class="text-sm text-brand-700 hover:underline">← My dues</a>
+  {% else %}<a href="{% url 'finance:dues_type' assessment.dues_type.pk %}" class="text-sm text-brand-700 hover:underline">← {{ assessment.dues_type.name }}</a>{% endif %}
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ assessment.dues_type.name }} {% status_badge row.derived_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{% if not is_own %}{{ p.full_name }} · {{ p.student_number|default:m.user.email }} · {% endif %}{{ m.level_code|default:"" }} · {{ m.academic_session }}</p>
+</div>
+
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="Assessed" value=row.amount_assessed|money %}
+  {% include "partials/_stat.html" with label="Waived" value=row.amount_waived|money %}
+  {% include "partials/_stat.html" with label="Paid" value=row.amount_paid|money value_class="text-brand-700" %}
+  {% include "partials/_stat.html" with label="Balance" value=row.balance|money value_class="text-amber-700" hint=assessment.due_date|date:"j M Y" %}
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Payments applied</h2>
+      <table class="table-base mt-2">
+        <thead><tr><th>Date</th><th>Method</th><th>Status</th><th class="text-right">Applied</th><th>Receipt</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for al in allocations %}
+          <tr><td>{{ al.allocated_at|date:"j M Y" }}</td><td>{{ al.payment.method_label }}</td><td>{% status_badge al.payment.payment_status %}</td><td class="text-right tabular-nums">{{ al.amount_allocated|money }}</td>
+            <td>{% if al.payment.receipt %}{{ al.payment.receipt.receipt_number }}{% else %}—{% endif %}</td></tr>
+          {% empty %}
+          <tr><td colspan="5" class="py-6 text-center text-slate-500">No payments applied yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    {% if waivers %}
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Waiver requests</h2>
+      <ul class="mt-2 divide-y divide-slate-100 text-sm">
+        {% for w in waivers %}
+        <li class="py-3">
+          <div class="flex flex-wrap items-center justify-between gap-2"><span class="font-medium tabular-nums">{{ w.amount|money }}</span>{% status_badge w.status %}</div>
+          <p class="mt-1 text-slate-700">{{ w.reason }}</p>
+          <p class="mt-1 text-xs text-slate-500">Requested {{ w.created_at|date:"j M Y" }} by {{ w.requested_by.display_name }}{% if w.decided_by %} · decided {{ w.decided_at|date:"j M Y" }} by {{ w.decided_by.display_name }}{% endif %}</p>
+          {% if w.decision_note %}<p class="mt-1 text-xs text-slate-600">Note: {{ w.decision_note }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="space-y-6">
+    {% if can_request_waiver %}
+    <form method="post" action="{% url 'finance:request_waiver' assessment.pk %}" class="card space-y-4 p-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold text-slate-700">Request a waiver</h2>
+      {% include "partials/_field.html" with field=waiver_form.amount %}
+      {% include "partials/_field.html" with field=waiver_form.reason %}
+      <button class="btn btn-secondary w-full">Send for approval</button>
+    </form>
+    {% elif pending_waiver %}
+    <div class="card p-4 text-sm text-slate-700">A waiver of <strong>{{ pending_waiver.amount|money }}</strong> is waiting for a decision.</div>
+    {% endif %}
+
+    {% if can_manage and assessment.assessment_state != "cancelled" and not allocations %}
+    <form method="post" action="{% url 'finance:cancel_assessment' assessment.pk %}" class="card space-y-4 p-4" x-data="{ open: false }">
+      {% csrf_token %}
+      <button type="button" class="text-sm font-medium text-red-700 hover:underline" @click="open = !open">Cancel this assessment…</button>
+      <div x-show="open" x-cloak class="space-y-3">
+        <p class="text-xs text-slate-600">Use this only if the member was assessed by mistake. It's recorded in the audit history.</p>
+        {% include "partials/_field.html" with field=cancel_form.reason %}
+        <button class="btn btn-danger w-full">Cancel assessment</button>
+      </div>
+    </form>
+    {% endif %}
+  </aside>
+</div>
+{% endwith %}
+{% endblock %}

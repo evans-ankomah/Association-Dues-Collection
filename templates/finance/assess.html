@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Assess members · {{ dues_type.name }}{% endblock %}
+
+{% block content %}
+{% url 'finance:dues_type' dues_type.pk as back %}
+{% include "partials/_page_header.html" with title="Assess members" subtitle=dues_type.name back_url=back back_label=dues_type.name %}
+
+<p class="mb-4 max-w-3xl text-sm text-slate-600">Choose which active members of {{ dues_type.academic_session }} should pay. Members who are already assessed for this dues type ({{ already }} so far) are skipped automatically.</p>
+
+<form method="post" class="grid gap-6 lg:grid-cols-3" novalidate>
+  {% csrf_token %}
+  <div class="card space-y-5 p-6 lg:col-span-2">
+    {% include "partials/_form_errors.html" %}
+    <fieldset>
+      <legend class="field-label">Levels</legend>
+      <div class="flex flex-wrap gap-x-6 gap-y-2">
+        {% for option in form.levels %}<label class="flex items-center gap-2 text-sm">{{ option.tag }} {{ option.choice_label }}</label>{% empty %}<p class="text-sm text-slate-500">No active members in this session.</p>{% endfor %}
+      </div>
+      <p class="mt-1 text-xs text-slate-500">{{ form.levels.help_text }}</p>
+    </fieldset>
+    {% if form.programmes.field.choices|length > 1 %}
+    <fieldset>
+      <legend class="field-label">Programmes</legend>
+      <div class="space-y-2">{% for option in form.programmes %}<label class="flex items-center gap-2 text-sm">{{ option.tag }} {{ option.choice_label }}</label>{% endfor %}</div>
+      <p class="mt-1 text-xs text-slate-500">{{ form.programmes.help_text }}</p>
+    </fieldset>
+    {% endif %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.amount %}
+      {% include "partials/_field.html" with field=form.due_date %}
+    </div>
+    <button type="submit" name="preview" class="btn btn-secondary">Preview</button>
+  </div>
+
+  <aside class="card h-fit p-6">
+    <h2 class="text-sm font-semibold text-slate-700">Preview</h2>
+    {% if preview %}
+      <p class="mt-3 text-3xl font-semibold tabular-nums">{{ preview.count }}</p>
+      <p class="text-sm text-slate-600">member{{ preview.count|pluralize }} will be assessed, totalling <strong>{{ preview.total|money }}</strong>.</p>
+      {% if preview.sample %}
+      <ul class="mt-4 space-y-1 text-sm text-slate-700">
+        {% for m in preview.sample %}<li class="truncate">{{ m.user.profile.full_name|default:m.user.email }} · {{ m.level_code|default:"—" }}</li>{% endfor %}
+        {% if preview.count > 10 %}<li class="text-slate-500">…and {{ preview.count|add:"-10" }} more</li>{% endif %}
+      </ul>
+      {% endif %}
+      {% if preview.count %}<button type="submit" name="confirm" class="btn btn-primary mt-6 w-full">Assess {{ preview.count }} member{{ preview.count|pluralize }}</button>{% endif %}
+    {% else %}
+      <p class="mt-3 text-sm text-slate-500">Choose the levels and amount, then select Preview to see who will be assessed before anything is saved.</p>
+    {% endif %}
+  </aside>
+</form>
+{% endblock %}

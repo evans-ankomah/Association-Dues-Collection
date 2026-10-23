@@ -1,0 +1,9 @@
+{% if page.paginator.num_pages > 1 %}
+<nav class="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm" aria-label="Pagination">
+  <p class="text-slate-600">{{ page.start_index }}–{{ page.end_index }} of {{ page.paginator.count }}</p>
+  <div class="flex gap-2">
+    {% if page.has_previous %}<a class="btn btn-secondary py-1.5" href="?{% if query %}{{ query }}&{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
+    {% if page.has_next %}<a class="btn btn-secondary py-1.5" href="?{% if query %}{{ query }}&{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
+  </div>
+</nav>
+{% endif %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}My dues · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% include "partials/_page_header.html" with title="My dues" subtitle=current_department %}
+
+<div class="grid gap-4 sm:grid-cols-2">
+  {% include "partials/_stat.html" with label="You owe" value=outstanding|money value_class="text-amber-700" %}
+  {% if overdue %}{% include "partials/_stat.html" with label="Overdue" value=overdue|length hint="Past the due date" value_class="text-red-700" %}{% endif %}
+</div>
+
+{% for group in sessions %}
+<section class="mt-8">
+  <h2 class="text-sm font-semibold tracking-wide text-slate-500 uppercase">{{ group.session }}</h2>
+  <ul class="mt-3 space-y-3">
+    {% for a in group.items %}
+    <li class="card flex flex-wrap items-center justify-between gap-4 p-4">
+      <div class="min-w-0">
+        <a href="{% url 'finance:assessment' a.pk %}" class="font-medium text-brand-700 hover:underline">{{ a.dues_type.name }}</a>
+        <p class="text-sm text-slate-600">{{ a.amount_assessed|money }}{% if a.amount_waived %} · {{ a.amount_waived|money }} waived{% endif %}{% if a.due_date %} · due {{ a.due_date|date:"j M Y" }}{% endif %}</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="text-right">
+          <p class="font-semibold tabular-nums">{{ a.balance|money }}</p>
+          {% status_badge a.derived_status %}
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% empty %}
+<div class="card mt-6 p-10 text-center text-sm text-slate-500">You have no dues in {{ current_department }}.</div>
+{% endfor %}
+{% endblock %}

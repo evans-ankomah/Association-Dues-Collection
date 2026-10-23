@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{% if dues_type %}Edit {{ dues_type.name }}{% else %}New dues type{% endif %} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% if dues_type %}{% url 'finance:dues_type' dues_type.pk as back %}{% else %}{% url 'finance:dues_types' as back %}{% endif %}
+{% include "partials/_page_header.html" with title=dues_type|yesno:"Edit dues type,New dues type" subtitle=current_session back_url=back %}
+<form method="post" class="card max-w-2xl space-y-4 p-6" novalidate>
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  {% include "partials/_field.html" with field=form.name %}
+  <div class="grid gap-4 sm:grid-cols-3">
+    {% include "partials/_field.html" with field=form.category %}
+    {% include "partials/_field.html" with field=form.default_amount %}
+    {% include "partials/_field.html" with field=form.due_date %}
+  </div>
+  {% include "partials/_field.html" with field=form.is_mandatory %}
+  {% include "partials/_field.html" with field=form.description %}
+  {% include "partials/_field.html" with field=form.eligibility_description %}
+  <div class="flex gap-3 pt-2">
+    <button type="submit" class="btn btn-primary">{% if dues_type %}Save changes{% else %}Create and choose members{% endif %}</button>
+    <a href="{{ back }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

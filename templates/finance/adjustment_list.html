@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Refunds and reversals · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% include "partials/_page_header.html" with title="Refunds and reversals" subtitle=current_department %}
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter by status">
+  {% for v, l in statuses %}<a href="?status={{ v }}" class="rounded-full px-3 py-1 {% if status == v %}bg-brand-600 text-white{% else %}bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50{% endif %}">{{ l }}</a>{% endfor %}
+  <a href="?status=" class="rounded-full px-3 py-1 {% if not status %}bg-brand-600 text-white{% else %}bg-white text-slate-700 ring-1 ring-slate-200{% endif %}">All</a>
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Requested</th><th>Payer</th><th>Type</th><th>Reason</th><th>Status</th><th class="text-right">Amount</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in page %}
+      <tr class="hover:bg-slate-50"><td><a href="{% url 'finance:adjustment' a.pk %}" class="text-brand-700 hover:underline">{{ a.created_at|date:"j M Y" }}</a></td>
+        <td>{{ a.payment.payer_membership.user.profile.full_name|default:"—" }}</td><td>{{ a.get_adjustment_type_display }}</td>
+        <td class="max-w-72 truncate">{{ a.reason }}</td><td>{% status_badge a.adjustment_status %}</td><td class="text-right tabular-nums">{{ a.amount|money }}</td></tr>
+      {% empty %}<tr><td colspan="6" class="py-10 text-center text-slate-500">Nothing here.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

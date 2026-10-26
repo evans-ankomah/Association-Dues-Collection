@@ -3,7 +3,12 @@
 from django.dispatch import receiver
 from django.urls import reverse
 
-from apps.finance.signals import payment_confirmed, payment_rejected, waiver_decided
+from apps.finance.signals import (
+    adjustment_processed,
+    payment_confirmed,
+    payment_rejected,
+    waiver_decided,
+)
 from apps.finance.templatetags.money import money
 
 from .delivery import notify
@@ -73,4 +78,25 @@ def on_waiver_decided(sender, waiver, **kwargs):
         ),
         link=reverse("finance:assessment", args=[assessment.pk]),
         dedupe_key=f"waiver:{waiver.pk}",
+    )
+
+
+@receiver(adjustment_processed)
+def on_adjustment_processed(sender, adjustment, **kwargs):
+    payment = adjustment.payment
+    user = _payer(payment)
+    if user is None:
+        return
+    verb = "refunded" if adjustment.adjustment_type == "refund" else "reversed"
+    amount = money(adjustment.amount, payment.currency)
+    body = f"{amount} of your {payment.method_label} payment has been {verb}. Reason: {adjustment.reason}"
+    if adjustment.provider_reference:
+        body += f" Reference {adjustment.provider_reference}."
+    notify(
+        user,
+        notification_type="payment_refunded",
+        title=f"{adjustment.get_adjustment_type_display()} of {amount} processed",
+        body=body,
+        link=reverse("finance:payment", args=[payment.pk]),
+        dedupe_key=f"adjustment:{adjustment.pk}",
     )

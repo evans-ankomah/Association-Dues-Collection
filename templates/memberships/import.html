@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Import roster · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'members:roster' as back %}
+{% include "partials/_page_header.html" with title="Import roster" subtitle=current_session back_url=back back_label="Members" %}
+
+{% if not preview %}
+<div class="grid gap-6 lg:grid-cols-3">
+  <form method="post" enctype="multipart/form-data" class="card space-y-4 p-6 lg:col-span-2">
+    {% csrf_token %}
+    <div>
+      <label for="roster" class="field-label">CSV or Excel file <span class="text-red-600" aria-hidden="true">*</span></label>
+      <input id="roster" name="roster" type="file" accept=".csv,.xlsx" required class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-brand-700">
+    </div>
+    <button class="btn btn-primary">Check the file</button>
+    <p class="text-xs text-slate-500">Nothing is saved until you confirm on the next page.</p>
+  </form>
+  <aside class="card p-4 text-sm text-slate-700">
+    <p class="font-semibold">Columns</p>
+    <p class="mt-1">Required: <code>email</code>, <code>given_name</code>, <code>family_name</code>.</p>
+    <p class="mt-1">Optional: <code>student_number</code>, <code>phone_number</code>, <code>programme_name</code>, <code>level_code</code> (e.g. “Level 200”).</p>
+    <p class="mt-2 text-xs text-slate-500">Members are added to {{ current_session }} with the Student / Member role. Existing accounts are matched by email; nobody is ever removed.</p>
+  </aside>
+</div>
+{% else %}
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="New accounts" value=preview.counts.new_user value_class="text-brand-700" %}
+  {% include "partials/_stat.html" with label="Existing, joining" value=preview.counts.new_membership %}
+  {% include "partials/_stat.html" with label="Already members (update)" value=preview.counts.update %}
+  {% include "partials/_stat.html" with label="Rows with problems" value=preview.counts.error value_class="text-red-700" hint="These are skipped" %}
+</div>
+
+<form method="post" class="card mt-4 flex flex-wrap items-center justify-between gap-4 p-4">
+  {% csrf_token %}
+  <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="send_welcome" value="1" checked class="h-4 w-4 rounded border-slate-300"> Email new members a link to set their password</label>
+  <div class="flex gap-2"><a href="{% url 'members:import' %}" class="btn btn-secondary">Upload a different file</a><button name="confirm" value="1" class="btn btn-primary" {% if not preview.valid %}disabled{% endif %}>Import {{ preview.valid }} row{{ preview.valid|pluralize }}</button></div>
+</form>
+
+<div class="card mt-4 overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Line</th><th>Result</th><th>Email</th><th>Name</th><th>Student no.</th><th>Level</th><th>Problems</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in preview.rows %}
+      <tr class="{% if r.action == 'error' %}bg-red-50/60{% endif %}">
+        <td class="tabular-nums">{{ r.line }}</td>
+        <td>{% if r.action == "new_user" %}New account{% elif r.action == "new_membership" %}Joins{% elif r.action == "update" %}Update{% else %}<span class="font-medium text-red-700">Skipped</span>{% endif %}</td>
+        <td>{{ r.email }}</td><td>{{ r.given_name }} {{ r.family_name }}</td><td class="tabular-nums">{{ r.student_number|default:"—" }}</td><td>{{ r.level_code|default:"—" }}</td>
+        <td class="text-red-700">{{ r.errors|join:"; " }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

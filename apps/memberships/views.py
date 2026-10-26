@@ -1,13 +1,16 @@
+from django.contrib import messages
 from django.db.models import DecimalField, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.access.mixins import permission_required
+from apps.accounts.emails import send_set_password_email
 from apps.common.models import ZERO
 from apps.finance.models import DuesAssessment, DuesBalance, Payment
 from apps.finance.services.balances import with_balances
 from apps.finance.views.common import paginate
 
+from . import importing
 from .models import DepartmentMembership
 
 MONEY = DecimalField(max_digits=14, decimal_places=2)
@@ -107,4 +110,55 @@ def member_detail(request, pk):
             "payments": payments,
             "outstanding": sum((a.balance for a in assessments if a.balance > 0), ZERO),
         },
+    )
+
+
+SESSION_IMPORT_KEY = "roster_import"
+
+
+@permission_required("members.roster.edit")
+def roster_import(request):
+    department, session = request.department, request.academic_session
+    if session is None:
+        messages.error(request, "Set up an academic session first.")
+        return redirect("members:roster")
+
+    if request.method == "POST" and "confirm" in request.POST:
+        stored = request.session.get(SESSION_IMPORT_KEY)
+        if not stored or stored["department"] != str(department.pk) or stored["session"] != str(session.pk):
+            messages.error(request, "The preview expired. Upload the file again.")
+            return redirect("members:import")
+        rows = importing.from_session(stored["rows"])
+        created, counts = importing.apply_roster(
+            rows, department=department, session=session, actor=request.user
+        )
+        del request.session[SESSION_IMPORT_KEY]
+        if request.POST.get("send_welcome"):
+            for user in created:
+                send_set_password_email(user, request)
+        messages.success(
+            request,
+            f"Imported: {counts['created']} new account(s), {counts['joined']} existing account(s) added, "
+            f"{counts['updated']} updated, {counts['skipped']} skipped.",
+        )
+        return redirect("members:roster")
+
+    preview = None
+    if request.method == "POST" and request.FILES.get("roster"):
+        try:
+            rows = importing.parse_roster(request.FILES["roster"], department=department, session=session)
+        except ValueError as exc:
+            messages.error(request, str(exc))
+        else:
+            request.session[SESSION_IMPORT_KEY] = {
+                "department": str(department.pk),
+                "session": str(session.pk),
+                "rows": importing.to_session(rows),
+            }
+            counts = importing.summarise(rows)
+            preview = {"rows": rows, "counts": counts, "valid": len(rows) - counts[importing.Action.ERROR]}
+    return render(
+        request,
+        "memberships/import.html",
+        {"preview": preview, "columns": importing.COLUMNS, "actions": importing.Action},
     )

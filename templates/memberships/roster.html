@@ -3,7 +3,10 @@
 {% block title %}Members · {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-{% include "partials/_page_header.html" with title="Members" subtitle=current_session %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Members</h1><p class="mt-1 text-sm text-slate-600">{{ current_session }}</p></div>
+  {% if "members.roster.edit" in perms_codes %}<a href="{% url 'members:import' %}" class="btn btn-secondary">Import roster</a>{% endif %}
+</div>
 
 <form method="get" class="flex flex-wrap items-end gap-3">
   <div class="min-w-48 flex-1"><label for="q" class="field-label">Search</label><input id="q" name="q" value="{{ filters.q }}" class="field-input" placeholder="Name, email or student number"></div>

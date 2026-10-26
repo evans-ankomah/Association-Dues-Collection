@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Financial account · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'finance:reconciliation' as back %}
+{% include "partials/_page_header.html" with title=account|yesno:"Edit account,New account" subtitle="Cash box, MoMo wallet, bank or Paystack settlement account." back_url=back back_label="Reconciliation" %}
+<form method="post" class="card max-w-xl space-y-4 p-6" novalidate>
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  {% for field in form %}{% include "partials/_field.html" %}{% endfor %}
+  <div class="flex gap-3"><button class="btn btn-primary">Save</button><a href="{{ back }}" class="btn btn-secondary">Cancel</a></div>
+</form>
+{% endblock %}

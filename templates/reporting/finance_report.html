@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Finance report · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Finance report</h1><p class="mt-1 text-sm text-slate-600">{{ current_department }} · {{ session }}</p></div>
+  {% if can_export %}
+  <div class="flex flex-wrap gap-2" aria-label="Exports">
+    <a class="btn btn-secondary" href="{% url 'reporting:export_balances' %}?session={{ session.pk }}&format=xlsx">Balances (Excel)</a>
+    <a class="btn btn-secondary" href="{% url 'reporting:export_balances' %}?session={{ session.pk }}&format=csv">Balances (CSV)</a>
+    <a class="btn btn-secondary" href="{% url 'reporting:export_payments' %}?start={{ start|date:'Y-m-d' }}&end={{ end|date:'Y-m-d' }}&format=xlsx">Payments (Excel)</a>
+  </div>
+  {% endif %}
+</div>
+
+<form method="get" class="flex flex-wrap items-end gap-3">
+  <div><label for="session" class="field-label">Session</label>
+    <select id="session" name="session" class="field-input">{% for s in sessions %}<option value="{{ s.pk }}" {% if s.pk == session.pk %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label for="start" class="field-label">Income from</label><input id="start" name="start" type="date" value="{{ start|date:'Y-m-d' }}" class="field-input"></div>
+  <div><label for="end" class="field-label">to</label><input id="end" name="end" type="date" value="{{ end|date:'Y-m-d' }}" class="field-input"></div>
+  <button class="btn btn-secondary">Update</button>
+</form>
+
+<h2 class="mt-8 text-lg font-semibold">Dues for {{ session }}</h2>
+<div class="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-5">
+  {% include "partials/_stat.html" with label="Assessed" value=totals.assessed|money %}
+  {% include "partials/_stat.html" with label="Waived" value=totals.waived|money %}
+  {% include "partials/_stat.html" with label="Collected" value=totals.collected|money value_class="text-brand-700" %}
+  {% include "partials/_stat.html" with label="Outstanding" value=totals.outstanding|money value_class="text-amber-700" %}
+  {% include "partials/_stat.html" with label="Collection rate" value=totals.collection_rate|percent %}
+</div>
+
+<div class="card mt-4 overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Dues type</th><th class="text-right">Members</th><th class="text-right">Assessed</th><th class="text-right">Waived</th><th class="text-right">Collected</th><th class="text-right">Outstanding</th><th class="text-right">Rate</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in by_type %}
+      <tr><td><a href="{% url 'finance:dues_type' r.dues_type_id %}" class="text-brand-700 hover:underline">{{ r.dues_type__name }}</a></td><td class="text-right tabular-nums">{{ r.members }}</td>
+        <td class="text-right tabular-nums">{{ r.assessed|money }}</td><td class="text-right tabular-nums">{{ r.waived|money }}</td>
+        <td class="text-right tabular-nums">{{ r.collected|money }}</td><td class="text-right tabular-nums">{{ r.outstanding|money }}</td><td class="text-right tabular-nums">{{ r.rate|percent }}</td></tr>
+      {% empty %}<tr><td colspan="7" class="py-6 text-center text-slate-500">No dues this session.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-4 grid gap-4 lg:grid-cols-3">
+  <div class="card p-5">{% include "reporting/partials/level_meters.html" %}</div>
+  <div class="card p-5 lg:col-span-2">{% include "reporting/partials/monthly_chart.html" %}</div>
+</div>
+
+<h2 class="mt-8 text-lg font-semibold">Income {{ start|date:"j M Y" }} – {{ end|date:"j M Y" }}</h2>
+<p class="mt-1 text-sm text-slate-600">Only confirmed payments count as income. Refunds and reversals are counted when processed.</p>
+<div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+  {% include "partials/_stat.html" with label="Received" value=gross|money %}
+  {% include "partials/_stat.html" with label="Refunded" value=refunds|money %}
+  {% include "partials/_stat.html" with label="Net income" value=net|money value_class="text-brand-700" %}
+</div>
+<div class="card mt-4 overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Method</th><th>Provider</th><th class="text-right">Payments</th><th class="text-right">Received</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in income %}<tr><td>{{ r.method_label }}</td><td>{{ r.provider_name|default:"—" }}</td><td class="text-right tabular-nums">{{ r.count }}</td><td class="text-right tabular-nums">{{ r.total|money }}</td></tr>
+      {% empty %}<tr><td colspan="4" class="py-6 text-center text-slate-500">No confirmed payments in this period.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

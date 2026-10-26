@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Pay online · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'finance:my_dues' as back %}
+{% include "partials/_page_header.html" with title="Pay online" subtitle="Mobile money or card, through Paystack." back_url=back back_label="My dues" %}
+
+{% if not configured %}
+<div class="card max-w-2xl p-6 text-sm text-slate-700">
+  <p>Online payment isn't switched on for {{ current_department }} yet.</p>
+  <p class="mt-2">You can still pay by MoMo or bank transfer to the association and <a href="{% url 'finance:my_payments' %}" class="font-medium text-brand-700 hover:underline">report the transaction ID</a>.</p>
+</div>
+{% elif not outstanding %}
+<div class="card max-w-2xl p-6 text-sm text-slate-700">You have nothing to pay right now.</div>
+{% else %}
+<form method="post" class="card max-w-2xl p-6" x-data="{ total: 0 }" x-init="total = [...$el.querySelectorAll('input[name=assessment]:checked')].reduce((s, i) => s + Number(i.dataset.amount), 0)"
+  @change="total = [...$el.querySelectorAll('input[name=assessment]:checked')].reduce((s, i) => s + Number(i.dataset.amount), 0)">
+  {% csrf_token %}
+  <fieldset>
+    <legend class="text-sm font-semibold text-slate-700">What are you paying for?</legend>
+    <ul class="mt-3 divide-y divide-slate-100">
+      {% for a in outstanding %}
+      <li>
+        <label class="flex cursor-pointer items-center justify-between gap-4 py-3">
+          <span class="flex items-center gap-3">
+            <input type="checkbox" name="assessment" value="{{ a.pk }}" data-amount="{{ a.balance }}" checked class="h-4 w-4 rounded border-slate-300 text-brand-600">
+            <span><span class="font-medium">{{ a.dues_type.name }}</span><span class="block text-xs text-slate-500">{{ a.department_membership.academic_session }}{% if a.due_date %} · due {{ a.due_date|date:"j M Y" }}{% endif %}</span></span>
+          </span>
+          <span class="tabular-nums">{{ a.balance|money }}</span>
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
+  </fieldset>
+  <div class="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+    <span class="text-sm text-slate-600">Total</span>
+    <span class="text-xl font-semibold tabular-nums">GHS <span x-text="total.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })"></span></span>
+  </div>
+  <button class="btn btn-primary mt-6 w-full" :disabled="total <= 0">Continue to Paystack</button>
+  <p class="mt-3 text-center text-xs text-slate-500">You'll be taken to Paystack's secure page. Your receipt appears here as soon as Paystack confirms the payment.</p>
+</form>
+{% endif %}
+{% endblock %}

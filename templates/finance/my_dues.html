@@ -10,7 +10,8 @@
   {% if overdue %}{% include "partials/_stat.html" with label="Overdue" value=overdue|length hint="Past the due date" value_class="text-red-700" %}{% endif %}
   {% if outstanding > 0 %}
   <div class="card flex flex-col justify-center gap-2 p-4">
-    {% block pay_actions %}<a href="{% url 'finance:my_payments' %}" class="btn btn-primary">Report a MoMo or bank payment</a>{% endblock %}
+    {% if "finance.payment.initiate" in perms_codes %}<a href="{% url 'finance:pay_online' %}" class="btn btn-primary">Pay online</a>{% endif %}
+    <a href="{% url 'finance:my_payments' %}" class="btn btn-secondary">Report a MoMo or bank payment</a>
   </div>
   {% endif %}
 </div>

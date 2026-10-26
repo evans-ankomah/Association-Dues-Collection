@@ -77,9 +77,17 @@ Reminders can also be run by hand: `python manage.py send_dues_reminders --dry-r
 config/       settings (base, dev, test, prod), URLs, Celery
 apps/         one Django app per module (common, accounts, finance, ...)
 templates/    shared templates and partials
-static/src/   Tailwind entry point
+assets/src/   Tailwind source (built into static/css/)
 seed/         anonymised UMaT sample-data generator (see seed/README.md)
 ```
+
+## Documentation
+
+- [Architecture](docs/architecture.md): modules, money rules, background jobs
+- [Roles and permissions](docs/permissions.md): who can do what, and the separation of duties
+- [Operations runbook](docs/runbook.md): environment, Docker deploy, Paystack set-up, backups, rollback
+- [Troubleshooting](docs/troubleshooting.md)
+- API: interactive docs at `/api/docs/`, OpenAPI schema at `/api/schema/`
 
 ## Branches
 

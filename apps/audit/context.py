@@ -24,3 +24,11 @@ class RequestIdMiddleware:
             request_id_var.reset(token)
         response["X-Request-ID"] = request_id
         return response
+
+
+class RequestIdLogFilter:
+    """Adds request_id to every log record so log lines can be tied to audit events."""
+
+    def filter(self, record):
+        record.request_id = request_id_var.get() or "-"
+        return True

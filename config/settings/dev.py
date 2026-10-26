@@ -15,3 +15,6 @@ from .base import *  # noqa: E402,F403
 STORAGES["staticfiles"] = {  # noqa: F405
     "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
 }
+
+# Run Celery tasks inline unless a worker is explicitly in use (CELERY_TASK_ALWAYS_EAGER=false).
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=True)  # noqa: F405

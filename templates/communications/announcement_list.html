@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Notices · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Notices</h1><p class="mt-1 text-sm text-slate-600">{{ current_department }}</p></div>
+  {% if can_publish %}<div class="flex gap-2"><a href="{% url 'communications:manage' %}" class="btn btn-secondary">Manage</a><a href="{% url 'communications:create' %}" class="btn btn-primary">New notice</a></div>{% endif %}
+</div>
+
+<form method="get" class="mb-4 flex gap-2"><label for="q" class="sr-only">Search notices</label><input id="q" name="q" value="{{ search }}" class="field-input" placeholder="Search notices"><button class="btn btn-secondary">Search</button></form>
+
+<div class="space-y-3">
+  {% for a in page %}
+  {% include "communications/partials/announcement_card.html" with a=a %}
+  {% empty %}
+  <div class="card p-10 text-center text-sm text-slate-500">No notices{% if search %} match “{{ search }}”{% endif %}.</div>
+  {% endfor %}
+</div>
+<div class="mt-4">{% include "partials/_pagination.html" %}</div>
+{% endblock %}

@@ -6,3 +6,6 @@ payment_confirmed = Signal()
 
 # Sent when a pending payment is rejected or fails verification. Args: payment, reason.
 payment_rejected = Signal()
+
+# Sent when a waiver request is approved or rejected. Args: waiver.
+waiver_decided = Signal()

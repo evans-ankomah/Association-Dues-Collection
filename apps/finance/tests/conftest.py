@@ -21,11 +21,6 @@ def dues_type(department, session, finsec):
 
 
 @pytest.fixture
-def membership(member, department, session):
-    return member.memberships.get(department=department, academic_session=session)
-
-
-@pytest.fixture
 def assessment(dues_type, membership, finsec):
     return AssessmentFactory(dues_type=dues_type, department_membership=membership, assessed_by=finsec)
 

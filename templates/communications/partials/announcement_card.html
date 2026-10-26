@@ -1,0 +1,8 @@
+<article class="card p-4 {% if a.priority == 'urgent' %}border-l-4 border-l-red-500{% elif a.priority == 'important' %}border-l-4 border-l-amber-500{% endif %}">
+  <div class="flex flex-wrap items-center gap-2">
+    {% if a.priority == "urgent" %}<span class="badge bg-red-100 text-red-800">Urgent</span>{% elif a.priority == "important" %}<span class="badge bg-amber-100 text-amber-800">Important</span>{% endif %}
+    <a href="{% url 'communications:announcement' a.pk %}" class="font-semibold text-slate-900 hover:text-brand-700 hover:underline">{{ a.title }}</a>
+  </div>
+  <p class="mt-1 line-clamp-2 text-sm text-slate-600">{{ a.body }}</p>
+  <p class="mt-2 text-xs text-slate-500">{{ a.published_at|date:"j M Y" }}{% if a.needs_acknowledgement and a.pk not in acknowledged %} · <span class="font-medium text-amber-700">Please confirm you've read this</span>{% endif %}</p>
+</article>

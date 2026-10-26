@@ -43,6 +43,11 @@ def member(make_user, department, session):
 
 
 @pytest.fixture
+def membership(member, department, session):
+    return member.memberships.get(department=department, academic_session=session)
+
+
+@pytest.fixture
 def login(client):
     def _login(user):
         assert client.login(email=user.email, password=TEST_PASSWORD)

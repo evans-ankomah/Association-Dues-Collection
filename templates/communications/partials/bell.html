@@ -1,0 +1,25 @@
+<div x-data="{ open: false }" class="relative">
+  <button type="button" @click="open = !open" :aria-expanded="open" class="relative rounded-full p-2 text-slate-600 hover:bg-slate-100"
+    aria-label="Notifications{% if unread_count %}, {{ unread_count }} unread{% endif %}">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg>
+    {% if unread_count %}<span class="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-xs font-semibold text-white">{{ unread_count|stringformat:"d"|slice:":3" }}</span>{% endif %}
+  </button>
+  <div x-show="open" x-cloak @click.outside="open = false" class="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-slate-200 bg-white shadow-lg">
+    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-2">
+      <p class="text-sm font-semibold">Notifications</p>
+      {% if unread_count %}<button type="button" class="text-xs text-brand-700 hover:underline" hx-post="{% url 'communications:mark_all_read' %}" hx-target="closest div[hx-get]" hx-swap="innerHTML">Mark all read</button>{% endif %}
+    </div>
+    <ul class="max-h-96 divide-y divide-slate-100 overflow-y-auto">
+      {% for n in recent %}
+      <li><a href="{% url 'communications:open' n.pk %}" class="block px-4 py-3 text-sm hover:bg-slate-50 {% if not n.read_at %}bg-brand-50/50{% endif %}">
+        <p class="font-medium {% if not n.read_at %}text-slate-900{% else %}text-slate-600{% endif %}">{{ n.title }}</p>
+        <p class="mt-0.5 line-clamp-2 text-xs text-slate-500">{{ n.body }}</p>
+        <p class="mt-1 text-xs text-slate-400">{{ n.created_at|timesince }} ago</p>
+      </a></li>
+      {% empty %}
+      <li class="px-4 py-6 text-center text-sm text-slate-500">You're all caught up.</li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'communications:notifications' %}" class="block border-t border-slate-100 px-4 py-2 text-center text-sm text-brand-700 hover:bg-slate-50">See all</a>
+  </div>
+</div>

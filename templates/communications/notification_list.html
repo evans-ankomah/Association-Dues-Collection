@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Notifications · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <h1 class="text-2xl font-semibold">Notifications</h1>
+  <form method="post" action="{% url 'communications:mark_all_read' %}">{% csrf_token %}<button class="btn btn-secondary">Mark all read</button></form>
+</div>
+<ul class="card divide-y divide-slate-100">
+  {% for n in page %}
+  <li><a href="{% url 'communications:open' n.pk %}" class="flex items-start gap-3 px-4 py-4 hover:bg-slate-50">
+    <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {% if n.read_at %}bg-transparent{% else %}bg-brand-500{% endif %}" aria-hidden="true"></span>
+    <span class="min-w-0">
+      <span class="block font-medium {% if n.read_at %}text-slate-600{% endif %}">{{ n.title }}{% if not n.read_at %}<span class="sr-only"> (unread)</span>{% endif %}</span>
+      <span class="mt-0.5 block text-sm text-slate-600">{{ n.body }}</span>
+      <span class="mt-1 block text-xs text-slate-400">{{ n.created_at|date:"j M Y, H:i" }}</span>
+    </span>
+  </a></li>
+  {% empty %}
+  <li class="px-4 py-10 text-center text-sm text-slate-500">No notifications yet.</li>
+  {% endfor %}
+</ul>
+<div class="mt-4">{% include "partials/_pagination.html" %}</div>
+{% endblock %}

@@ -30,6 +30,9 @@ NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
             NavItem("Home", "home"),
             NavItem("My dues", "finance:my_dues", ("dues.own.view",)),
             NavItem("My payments", "finance:my_payments", ("dues.own.view", "finance.receipt.view")),
+            NavItem(
+                "Notices", "communications:announcements", ("announcements.view", "announcements.publish")
+            ),
         ],
     ),
     (

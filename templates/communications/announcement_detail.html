@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ announcement.title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <a href="{% url 'communications:announcements' %}" class="text-sm text-brand-700 hover:underline">← Notices</a>
+  <article class="card mt-2 p-6 sm:p-8">
+    <div class="flex flex-wrap items-center gap-2">
+      {% if announcement.priority != "normal" %}{% status_badge announcement.priority announcement.get_priority_display %}{% endif %}
+      {% if can_publish %}{% status_badge announcement.announcement_status %}{% endif %}
+    </div>
+    <h1 class="mt-2 text-2xl font-semibold">{{ announcement.title }}</h1>
+    <p class="mt-1 text-sm text-slate-500">{{ announcement.published_at|date:"j M Y, H:i"|default:"Not published" }}{% if can_publish %} · {{ announcement.get_audience_type_display }}{% if announcement.levels %}: {{ announcement.levels|join:", " }}{% endif %}{% if announcement.programmes %}: {{ announcement.programmes|join:", " }}{% endif %}{% endif %}</p>
+    <div class="mt-6 text-slate-800 whitespace-pre-line">{{ announcement.body }}</div>
+
+    {% if announcement.needs_acknowledgement and announcement.announcement_status == "published" %}
+    <div class="mt-8 border-t border-slate-200 pt-4">
+      {% if acknowledged %}
+      <p class="text-sm text-brand-700">You confirmed you read this on {{ acknowledged.acknowledged_at|date:"j M Y" }}.</p>
+      {% else %}
+      <form method="post" action="{% url 'communications:acknowledge' announcement.pk %}">{% csrf_token %}<button class="btn btn-primary">I've read this</button></form>
+      {% endif %}
+    </div>
+    {% endif %}
+  </article>
+
+  {% if can_publish %}
+  <section class="card mt-4 flex flex-wrap items-center justify-between gap-4 p-4">
+    {% if stats and announcement.needs_acknowledgement %}<p class="text-sm text-slate-700"><strong>{{ stats.acknowledged }}</strong> of {{ stats.audience }} have confirmed they read it.</p>{% else %}<span></span>{% endif %}
+    <div class="flex flex-wrap gap-2">
+      {% if announcement.announcement_status == "draft" or announcement.announcement_status == "scheduled" %}<a href="{% url 'communications:edit' announcement.pk %}" class="btn btn-secondary">Edit</a>{% endif %}
+      <form method="post" action="{% url 'communications:status' announcement.pk %}">{% csrf_token %}
+        {% if announcement.announcement_status == "published" %}<button name="status" value="archived" class="btn btn-secondary">Archive</button>
+        {% elif announcement.announcement_status == "draft" or announcement.announcement_status == "scheduled" %}<button name="status" value="cancelled" class="btn btn-secondary">Cancel</button>{% endif %}
+      </form>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

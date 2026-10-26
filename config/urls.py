@@ -14,5 +14,6 @@ urlpatterns = [
     path("context/", include("apps.access.urls")),
     path("finance/", include("apps.finance.urls")),
     path("members/", include("apps.memberships.urls")),
+    path("communications/", include("apps.communications.urls")),
     path("django-admin/", admin.site.urls),
 ]

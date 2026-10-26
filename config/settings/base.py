@@ -37,6 +37,7 @@ LOCAL_APPS = [
     "apps.access",
     "apps.audit",
     "apps.finance",
+    "apps.communications",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -148,6 +149,8 @@ PAYSTACK_BASE_URL = env("PAYSTACK_BASE_URL", default="https://api.paystack.co")
 SMS_BACKEND = env("SMS_BACKEND", default="disabled")
 
 SITE_NAME = env("SITE_NAME", default="DeptHub")
+# Absolute base URL used in emails, e.g. https://dues.example.edu
+SITE_URL = env("SITE_URL", default="http://localhost:8000")
 
 LOGGING = {
     "version": 1,

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{% if announcement.pk %}Edit notice{% else %}New notice{% endif %} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'communications:manage' as back %}
+{% include "partials/_page_header.html" with title=announcement.pk|yesno:"Edit notice,New notice" subtitle=current_department back_url=back back_label="Manage notices" %}
+<form method="post" class="card max-w-3xl space-y-5 p-6" novalidate x-data="{ audience: '{{ form.audience_type.value|default:'all_members' }}' }">
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  {% include "partials/_field.html" with field=form.title %}
+  {% include "partials/_field.html" with field=form.body %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "partials/_field.html" with field=form.audience_type %}
+    {% include "partials/_field.html" with field=form.priority %}
+  </div>
+  <fieldset x-show="audience === 'selected_levels'" x-cloak>
+    <legend class="field-label">Levels</legend>
+    <div class="flex flex-wrap gap-x-6 gap-y-2">{% for o in form.levels %}<label class="flex items-center gap-2 text-sm">{{ o.tag }} {{ o.choice_label }}</label>{% endfor %}</div>
+    {% for e in form.levels.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+  </fieldset>
+  <fieldset x-show="audience === 'selected_programmes'" x-cloak>
+    <legend class="field-label">Programmes</legend>
+    <div class="space-y-2">{% for o in form.programmes %}<label class="flex items-center gap-2 text-sm">{{ o.tag }} {{ o.choice_label }}</label>{% endfor %}</div>
+    {% for e in form.programmes.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+  </fieldset>
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "partials/_field.html" with field=form.publish_at %}
+    {% include "partials/_field.html" with field=form.expires_at %}
+  </div>
+  <div class="flex flex-wrap gap-3 pt-2">
+    <button type="submit" name="publish" class="btn btn-primary">Publish</button>
+    <button type="submit" name="draft" class="btn btn-secondary">Save draft</button>
+    <a href="{{ back }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

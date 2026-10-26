@@ -9,6 +9,7 @@ from apps.audit.services import record, snapshot
 from apps.memberships.models import DepartmentMembership
 
 from ..models import DuesAssessment, DuesType, WaiverRequest
+from ..signals import waiver_decided
 from .balances import assessment_balance
 from .errors import FinanceError, require_perm
 
@@ -174,6 +175,7 @@ def decide_waiver(waiver, *, actor, approve, note=""):
     waiver.decided_at = now
     waiver.decision_note = note or None
     waiver.save()
+    transaction.on_commit(lambda: waiver_decided.send(sender=WaiverRequest, waiver=waiver))
     return waiver
 
 

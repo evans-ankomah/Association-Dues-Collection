@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Manage notices · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><a href="{% url 'communications:announcements' %}" class="text-sm text-brand-700 hover:underline">← Notices</a><h1 class="mt-1 text-2xl font-semibold">Manage notices</h1></div>
+  <a href="{% url 'communications:create' %}" class="btn btn-primary">New notice</a>
+</div>
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter by status">
+  <a href="?" class="rounded-full px-3 py-1 {% if not status %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">All</a>
+  {% for v, l in statuses %}<a href="?status={{ v }}" class="rounded-full px-3 py-1 {% if status == v %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">{{ l }}</a>{% endfor %}
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Title</th><th>Audience</th><th>Priority</th><th>Status</th><th>Published</th><th>By</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in page %}
+      <tr class="hover:bg-slate-50"><td class="max-w-80 truncate"><a href="{% url 'communications:announcement' a.pk %}" class="font-medium text-brand-700 hover:underline">{{ a.title }}</a></td>
+        <td>{{ a.get_audience_type_display }}</td><td>{{ a.get_priority_display }}</td><td>{% status_badge a.announcement_status %}</td>
+        <td>{{ a.published_at|date:"j M Y"|default:"—" }}</td><td>{{ a.created_by.display_name }}</td></tr>
+      {% empty %}
+      <tr><td colspan="6" class="py-10 text-center text-slate-500">No notices.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

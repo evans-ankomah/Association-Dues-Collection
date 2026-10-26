@@ -9,6 +9,7 @@ echo "== lint"
 "$BIN/ruff" check .
 "$BIN/ruff" format --check .
 echo "== migrations";  "$BIN/python" manage.py makemigrations --check --dry-run
+echo "== api schema";  "$BIN/python" manage.py spectacular --validate --fail-on-warn --file "$(mktemp)"
 echo "== deploy check"
 DJANGO_SETTINGS_MODULE=config.settings.prod ALLOWED_HOSTS=example.com \
   SECRET_KEY="local-deploy-check-$(date +%s)-padding-padding-padding-padding" \

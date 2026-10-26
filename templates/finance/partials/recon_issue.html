@@ -1,0 +1,16 @@
+{% load money %}
+<details class="card p-4" {% if items %}open{% endif %}>
+  <summary class="cursor-pointer text-sm font-medium">{{ title }} <span class="{% if items %}text-amber-700{% else %}text-slate-500{% endif %}">({{ items|length }})</span></summary>
+  <p class="mt-1 text-xs text-slate-600">{{ help }}</p>
+  {% if items %}
+  <ul class="mt-2 divide-y divide-slate-100 text-sm">
+    {% for p in items|slice:":25" %}
+    <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+      <a href="{% url 'finance:payment' p.pk %}" class="text-brand-700 hover:underline">{{ p.initiated_at|date:"j M Y" }} · {{ p.payer_membership.user.profile.full_name|default:"—" }} · {{ p.method_label }}{% if p.external_reference %} · ref {{ p.external_reference }}{% endif %}</a>
+      <span class="flex items-center gap-2"><span class="tabular-nums">{{ p.amount|money }}</span>{% status_badge p.payment_status %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if items|length > 25 %}<p class="mt-1 text-xs text-slate-500">Showing 25 of {{ items|length }}.</p>{% endif %}
+  {% endif %}
+</details>

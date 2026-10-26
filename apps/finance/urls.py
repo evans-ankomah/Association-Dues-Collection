@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import adjustments, dues, member, online, payments, waivers
+from .views import adjustments, dues, member, online, payments, reconciliation, waivers
 
 app_name = "finance"
 
@@ -36,4 +36,8 @@ urlpatterns = [
     path("adjustments/<uuid:pk>/decide/", adjustments.decide_adjustment, name="decide_adjustment"),
     path("adjustments/<uuid:pk>/process/", adjustments.process_adjustment, name="process_adjustment"),
     path("payments/<uuid:pk>/refund/", adjustments.request_adjustment, name="request_adjustment"),
+    path("reconciliation/", reconciliation.reconciliation, name="reconciliation"),
+    path("reconciliation/check-online/", reconciliation.check_online_payments, name="check_online"),
+    path("accounts/new/", reconciliation.account_form, name="account_create"),
+    path("accounts/<uuid:pk>/edit/", reconciliation.account_form, name="account_edit"),
 ]

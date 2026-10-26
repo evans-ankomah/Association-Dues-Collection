@@ -40,6 +40,7 @@ LOCAL_APPS = [
     "apps.finance",
     "apps.communications",
     "apps.reporting",
+    "apps.api",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -145,6 +146,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.UserRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"user": "600/hour"},
 }
 SPECTACULAR_SETTINGS = {
     "TITLE": "DeptHub API",

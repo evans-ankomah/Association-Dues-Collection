@@ -41,6 +41,8 @@ jobs:
         run: ruff check . && ruff format --check .
       - name: Migrations are up to date
         run: python manage.py makemigrations --check --dry-run
+      - name: OpenAPI schema is valid
+        run: python manage.py spectacular --validate --fail-on-warn --file /tmp/schema.yml
       - name: Django system checks
         run: python manage.py check --deploy --fail-level ERROR
         env:

@@ -1,0 +1,21 @@
+{% load money %}
+<div id="online-status" class="card p-8 text-center"
+  {% if payment.payment_status == "pending" %}hx-get="{% url 'finance:online_status' payment.provider_reference %}" hx-trigger="every 4s" hx-swap="outerHTML"{% endif %}
+  aria-live="polite">
+  {% if payment.is_confirmed %}
+    <p class="text-sm font-semibold text-brand-700">Payment confirmed</p>
+    <h1 class="mt-2 text-2xl font-semibold tabular-nums">{{ payment.amount|money:payment.currency }}</h1>
+    <p class="mt-2 text-sm text-slate-600">Thank you. Your receipt is ready.</p>
+    {% if payment.receipt %}<a href="{% url 'finance:receipt' payment.receipt.pk %}" class="btn btn-primary mt-6">View receipt {{ payment.receipt.receipt_number }}</a>{% endif %}
+  {% elif payment.payment_status == "pending" %}
+    <p class="text-sm font-semibold text-amber-700">Waiting for Paystack</p>
+    <h1 class="mt-2 text-2xl font-semibold tabular-nums">{{ payment.amount|money:payment.currency }}</h1>
+    <p class="mt-2 text-sm text-slate-600">We're confirming your payment with Paystack. This page updates by itself. If you approved a MoMo prompt, it can take a minute.</p>
+  {% else %}
+    <p class="text-sm font-semibold text-red-700">Payment not completed</p>
+    <h1 class="mt-2 text-2xl font-semibold tabular-nums">{{ payment.amount|money:payment.currency }}</h1>
+    <p class="mt-2 text-sm text-slate-600">Paystack didn't complete this payment, so nothing was charged to your dues. You can try again.</p>
+    <a href="{% url 'finance:pay_online' %}" class="btn btn-primary mt-6">Try again</a>
+  {% endif %}
+  <p class="mt-6 text-xs text-slate-500">Reference {{ payment.provider_reference }}</p>
+</div>

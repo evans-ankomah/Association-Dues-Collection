@@ -50,6 +50,9 @@ class Payment(TimeStampedModel):
     initiated_at = models.DateTimeField(null=True, blank=True, default=timezone.now)
     confirmed_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
+    # Not in the workbook: for online payments, the dues the payer chose to settle
+    # ([{"assessment_id": ..., "amount": "..."}]), applied when the provider confirms.
+    intended_allocations = models.JSONField(null=True, blank=True)
 
     class Meta:
         db_table = "payments"

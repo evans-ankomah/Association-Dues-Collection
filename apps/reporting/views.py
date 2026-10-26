@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
@@ -11,6 +12,7 @@ from apps.common.navigation import FINANCE_VIEWERS
 from apps.communications.services import visible_announcements
 from apps.finance.models import DuesAssessment, DuesBalance, Payment
 from apps.finance.services.balances import with_balances
+from apps.finance.services.spending import paid_expenses
 from apps.institutions.models import AcademicSession
 
 from . import services
@@ -92,6 +94,8 @@ def finance_report(request):
     income = services.payments_by_method(department, start, end)
     gross = sum((row["total"] for row in income), Decimal("0"))
     refunds = services.refunds_total(department, start, end)
+    expenses = paid_expenses(department, start, end)
+    spent = sum(expenses.values_list("amount", flat=True), Decimal("0"))
     return render(
         request,
         "reporting/finance_report.html",
@@ -107,6 +111,11 @@ def finance_report(request):
             "gross": gross,
             "refunds": refunds,
             "net": gross - refunds,
+            "spent": spent,
+            "cash_position": gross - refunds - spent,
+            "expenses_by_category": expenses.values("category")
+            .annotate(total=Sum("amount"))
+            .order_by("-total"),
             "monthly": services.monthly_income(department, months=12),
             "can_export": has_perm(request.user, "finance.report.export", department),
         },

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import adjustments, dues, member, online, payments, reconciliation, waivers
+from .views import adjustments, dues, member, online, payments, reconciliation, spending, waivers
 
 app_name = "finance"
 
@@ -40,4 +40,17 @@ urlpatterns = [
     path("reconciliation/check-online/", reconciliation.check_online_payments, name="check_online"),
     path("accounts/new/", reconciliation.account_form, name="account_create"),
     path("accounts/<uuid:pk>/edit/", reconciliation.account_form, name="account_edit"),
+    path("budgets/", spending.budget_list, name="budgets"),
+    path("budgets/new/", spending.budget_form, name="budget_create"),
+    path("budgets/<uuid:pk>/", spending.budget_detail, name="budget"),
+    path("budgets/<uuid:pk>/edit/", spending.budget_form, name="budget_edit"),
+    path("budgets/<uuid:pk>/action/", spending.budget_action, name="budget_action"),
+    path("expense-requests/", spending.request_list, name="expense_requests"),
+    path("expense-requests/new/", spending.request_form, name="expense_request_create"),
+    path("expense-requests/<uuid:pk>/", spending.request_detail, name="expense_request"),
+    path("expense-requests/<uuid:pk>/action/", spending.request_action, name="expense_request_action"),
+    path("expenses/", spending.expense_list, name="expenses"),
+    path("expenses/new/", spending.expense_form, name="expense_create"),
+    path("expenses/<uuid:pk>/", spending.expense_detail, name="expense"),
+    path("expenses/<uuid:pk>/action/", spending.expense_action, name="expense_action"),
 ]

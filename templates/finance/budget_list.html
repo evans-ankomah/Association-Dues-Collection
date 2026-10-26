@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Budgets · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Budgets</h1><p class="mt-1 text-sm text-slate-600">{{ current_session }}</p></div>
+  <div class="flex gap-2"><a href="{% url 'finance:expense_requests' %}" class="btn btn-secondary">Expense requests</a>{% if can_create %}<a href="{% url 'finance:budget_create' %}" class="btn btn-primary">New budget</a>{% endif %}</div>
+</div>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Budget</th><th>Status</th><th class="text-right">Allocated</th><th class="text-right">Spent</th><th class="text-right">Committed</th><th class="text-right">Remaining</th><th class="w-40">Used</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in rows %}
+      <tr class="hover:bg-slate-50">
+        <td><a href="{% url 'finance:budget' r.budget.pk %}" class="font-medium text-brand-700 hover:underline">{{ r.budget.name }}</a><p class="text-xs text-slate-500">{{ r.budget.category }} · {{ r.budget.starts_on|date:"j M" }}–{{ r.budget.ends_on|date:"j M Y" }}</p></td>
+        <td>{% status_badge r.budget.budget_status %}</td>
+        <td class="text-right tabular-nums">{{ r.allocated|money }}</td><td class="text-right tabular-nums">{{ r.spent|money }}</td>
+        <td class="text-right tabular-nums">{{ r.committed|money }}</td><td class="text-right tabular-nums {% if r.remaining < 0 %}text-red-700{% endif %}">{{ r.remaining|money }}</td>
+        <td><div class="h-2 rounded-full bg-slate-100" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ r.utilisation|floatformat:'0u'|default:'0' }}" aria-label="{{ r.budget.name }} used"><div class="h-2 rounded-full {% if r.utilisation > 100 %}bg-red-600{% else %}bg-brand-600{% endif %}" style="width: min({{ r.utilisation|floatformat:'2u'|default:'0' }}%, 100%)"></div></div><p class="mt-1 text-xs text-slate-500 tabular-nums">{{ r.utilisation|percent }}</p></td>
+      </tr>
+      {% empty %}<tr><td colspan="7" class="py-10 text-center text-slate-500">No budgets for this session yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

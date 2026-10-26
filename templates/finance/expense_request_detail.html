@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ req.title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'finance:expense_requests' %}" class="text-sm text-brand-700 hover:underline">← Expense requests</a>
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ req.title }} {% status_badge req.request_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ req.requested_amount|money }} · raised by {{ req.requested_by.display_name }}{% if req.budget %} · <a href="{% url 'finance:budget' req.budget.pk %}" class="text-brand-700 hover:underline">{{ req.budget.name }}</a>{% endif %}{% if req.needed_by %} · needed by {{ req.needed_by|date:"j M Y" }}{% endif %}</p>
+</div>
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <section class="card p-4"><h2 class="text-sm font-semibold text-slate-700">Purpose</h2><p class="mt-2 whitespace-pre-line text-sm">{{ req.purpose }}</p>{% if req.decision_note %}<p class="mt-3 text-sm text-slate-600">Decision note: {{ req.decision_note }}</p>{% endif %}</section>
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Approvals</h2>
+      <ol class="mt-3 space-y-3">
+        {% for a in approvals %}
+        <li class="flex items-start justify-between gap-4 border-l-2 pl-3 {% if a.decision == 'approved' %}border-brand-500{% elif a.decision == 'rejected' %}border-red-500{% else %}border-slate-300{% endif %}">
+          <div><p class="text-sm font-medium">Step {{ a.step_number }} · {{ a.label }}</p>
+            <p class="text-xs text-slate-500">{% if a.acted_at %}{{ a.approver_user.display_name }} · {{ a.acted_at|date:"j M Y, H:i" }}{% else %}Waiting · due {{ a.due_at|date:"j M" }}{% endif %}</p>
+            {% if a.comments %}<p class="mt-1 text-sm text-slate-700">{{ a.comments }}</p>{% endif %}</div>
+          {% status_badge a.decision %}
+        </li>
+        {% empty %}<li class="text-sm text-slate-500">Not submitted yet.</li>{% endfor %}
+      </ol>
+    </section>
+    {% if expenses %}
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Spending</h2>
+      <table class="table-base mt-2"><tbody class="divide-y divide-slate-100">
+        {% for e in expenses %}<tr><td><a href="{% url 'finance:expense' e.pk %}" class="text-brand-700 hover:underline">{{ e.description }}</a></td><td>{% status_badge e.expense_status %}</td><td class="text-right tabular-nums">{{ e.amount|money }}</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+    {% endif %}
+  </div>
+  <aside class="space-y-4">
+    {% if can_decide %}
+    <form method="post" action="{% url 'finance:expense_request_action' req.pk %}" class="card space-y-3 p-4">
+      {% csrf_token %}<h2 class="text-sm font-semibold">Your decision</h2>
+      <label for="comments" class="field-label">Comments</label><textarea id="comments" name="comments" rows="2" class="field-input"></textarea>
+      <div class="flex gap-2"><button name="action" value="approve" class="btn btn-primary">Approve</button><button name="action" value="reject" class="btn btn-secondary">Reject</button></div>
+    </form>
+    {% endif %}
+    {% if is_requester and req.request_status == "draft" %}<form method="post" action="{% url 'finance:expense_request_action' req.pk %}">{% csrf_token %}<button name="action" value="submit" class="btn btn-primary w-full">Send for approval</button></form>{% endif %}
+    {% if is_requester and req.request_status == "draft" or is_requester and req.request_status == "pending_approval" %}<form method="post" action="{% url 'finance:expense_request_action' req.pk %}">{% csrf_token %}<button name="action" value="withdraw" class="btn btn-secondary w-full">Withdraw</button></form>{% endif %}
+    {% if can_record %}<a href="{% url 'finance:expense_create' %}?request={{ req.pk }}" class="btn btn-primary w-full">Record the expense</a>{% endif %}
+  </aside>
+</div>
+{% endblock %}

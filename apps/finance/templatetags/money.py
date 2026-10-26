@@ -34,6 +34,12 @@ BADGE_STYLES = {
     "scheduled": "bg-sky-100 text-sky-800",
     "published": "bg-brand-100 text-brand-800",
     "archived": "bg-slate-200 text-slate-600",
+    "fulfilled": "bg-brand-100 text-brand-800",
+    "pending_payment": "bg-amber-100 text-amber-800",
+    "submitted": "bg-sky-100 text-sky-800",
+    "withdrawn": "bg-slate-200 text-slate-600",
+    "recorded": "bg-slate-100 text-slate-700",
+    "returned": "bg-amber-100 text-amber-800",
 }
 
 LABELS = {

@@ -9,9 +9,14 @@ from .payments import (
     Receipt,
     ReceiptCounter,
 )
+from .spending import Budget, Expense, ExpenseApproval, ExpenseRequest
 from .views import DuesBalance
 
 __all__ = [
+    "Budget",
+    "Expense",
+    "ExpenseApproval",
+    "ExpenseRequest",
     "CONFIRMED_PAYMENT_STATES",
     "DuesAssessment",
     "DuesBalance",

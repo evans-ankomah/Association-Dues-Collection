@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}New expense request · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'finance:expense_requests' as back %}
+{% include "partials/_page_header.html" with title="New expense request" back_url=back back_label="Expense requests" %}
+<form method="post" class="card max-w-2xl space-y-4 p-6" novalidate>
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  {% include "partials/_field.html" with field=form.title %}
+  <div class="grid gap-4 sm:grid-cols-3">{% include "partials/_field.html" with field=form.budget %}{% include "partials/_field.html" with field=form.requested_amount %}{% include "partials/_field.html" with field=form.needed_by %}</div>
+  {% include "partials/_field.html" with field=form.purpose %}
+  <div class="flex flex-wrap gap-3"><button name="submit" class="btn btn-primary">Send for approval</button><button name="draft" class="btn btn-secondary">Save draft</button><a href="{{ back }}" class="btn btn-secondary">Cancel</a></div>
+</form>
+{% endblock %}

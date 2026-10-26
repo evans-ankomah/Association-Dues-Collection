@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ budget.name }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <a href="{% url 'finance:budgets' %}" class="text-sm text-brand-700 hover:underline">← Budgets</a>
+    <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ budget.name }} {% status_badge budget.budget_status %}</h1>
+    <p class="mt-1 text-sm text-slate-600">{{ budget.category }} · {{ budget.starts_on|date:"j M Y" }} – {{ budget.ends_on|date:"j M Y" }} · proposed by {{ budget.proposed_by.display_name }}{% if budget.approved_by %} · approved by {{ budget.approved_by.display_name }}{% endif %}</p>
+  </div>
+  <form method="post" action="{% url 'finance:budget_action' budget.pk %}" class="flex flex-wrap gap-2">
+    {% csrf_token %}
+    {% if can_edit %}<a href="{% url 'finance:budget_edit' budget.pk %}" class="btn btn-secondary">Edit</a><button name="action" value="submit" class="btn btn-primary">Send for approval</button>{% endif %}
+    {% if can_decide %}<button name="action" value="approve" class="btn btn-primary">Approve</button><button name="action" value="return" class="btn btn-secondary">Return for changes</button>{% endif %}
+    {% if can_close %}<button name="action" value="close" class="btn btn-secondary">Close budget</button>{% endif %}
+  </form>
+</div>
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="Allocated" value=figures.allocated|money %}
+  {% include "partials/_stat.html" with label="Spent (paid)" value=figures.spent|money hint=figures.utilisation|percent %}
+  {% include "partials/_stat.html" with label="Committed" value=figures.committed|money hint="Approved, not yet paid" %}
+  {% include "partials/_stat.html" with label="Remaining" value=figures.remaining|money value_class="text-brand-700" %}
+</div>
+<div class="card mt-6 overflow-x-auto">
+  <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Expense requests</h2>
+  <table class="table-base mt-2">
+    <thead><tr><th>Request</th><th>Raised by</th><th>Status</th><th class="text-right">Amount</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in requests %}<tr><td><a href="{% url 'finance:expense_request' r.pk %}" class="text-brand-700 hover:underline">{{ r.title }}</a></td><td>{{ r.requested_by.display_name }}</td><td>{% status_badge r.request_status %}</td><td class="text-right tabular-nums">{{ r.requested_amount|money }}</td></tr>
+      {% empty %}<tr><td colspan="4" class="py-6 text-center text-slate-500">No requests against this budget.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

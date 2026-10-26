@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Record an expense · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'finance:expenses' as back %}
+{% include "partials/_page_header.html" with title="Record an expense" back_url=back back_label="Expenses" %}
+{% if req %}<p class="mb-4 text-sm text-slate-700">Against <a href="{% url 'finance:expense_request' req.pk %}" class="font-medium text-brand-700 hover:underline">{{ req.title }}</a> (approved {{ req.requested_amount|money }}).</p>
+{% else %}<p class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">This expense has no approved request. It will be flagged in reports. Where possible, raise a request first.</p>{% endif %}
+<form method="post" class="card max-w-2xl space-y-4 p-6" novalidate>
+  {% csrf_token %}
+  {% if req %}<input type="hidden" name="request" value="{{ req.pk }}">{% endif %}
+  {% include "partials/_form_errors.html" %}
+  {% include "partials/_field.html" with field=form.description %}
+  <div class="grid gap-4 sm:grid-cols-2">{% include "partials/_field.html" with field=form.vendor_name %}{% include "partials/_field.html" with field=form.category %}</div>
+  <div class="grid gap-4 sm:grid-cols-2">{% include "partials/_field.html" with field=form.amount %}{% include "partials/_field.html" with field=form.incurred_on %}</div>
+  <div class="flex gap-3"><button class="btn btn-primary">Record expense</button><a href="{{ back }}" class="btn btn-secondary">Cancel</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Expense requests · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Expense requests</h1><p class="mt-1 text-sm text-slate-600">Approved by the President, then the HoD or adviser.</p></div>
+  <div class="flex gap-2"><a href="{% url 'finance:expenses' %}" class="btn btn-secondary">Expenses</a>{% if can_create %}<a href="{% url 'finance:expense_request_create' %}" class="btn btn-primary">New request</a>{% endif %}</div>
+</div>
+{% if awaiting_me %}
+<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+  <p class="font-medium">Waiting for your decision</p>
+  <ul class="mt-1 space-y-1">{% for r in awaiting_me %}<li><a href="{% url 'finance:expense_request' r.pk %}" class="hover:underline">{{ r.title }} · {{ r.requested_amount|money }}</a></li>{% endfor %}</ul>
+</div>
+{% endif %}
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter by status">
+  <a href="?" class="rounded-full px-3 py-1 {% if not status %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">All</a>
+  {% for v, l in statuses %}<a href="?status={{ v }}" class="rounded-full px-3 py-1 {% if status == v %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">{{ l }}</a>{% endfor %}
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Request</th><th>Budget</th><th>Raised by</th><th>Status</th><th class="text-right">Amount</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in page %}<tr class="hover:bg-slate-50"><td><a href="{% url 'finance:expense_request' r.pk %}" class="font-medium text-brand-700 hover:underline">{{ r.title }}</a><p class="text-xs text-slate-500">{{ r.created_at|date:"j M Y" }}</p></td>
+        <td>{{ r.budget.name|default:"—" }}</td><td>{{ r.requested_by.display_name }}</td><td>{% status_badge r.request_status %}</td><td class="text-right tabular-nums">{{ r.requested_amount|money }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="py-10 text-center text-slate-500">No requests.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

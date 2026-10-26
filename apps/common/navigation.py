@@ -23,6 +23,15 @@ FINANCE_VIEWERS = (
     "finance.report.export",
 )
 
+SPENDING_VIEWERS = (
+    "finance.budget.create",
+    "finance.budget.approve",
+    "finance.expense.create",
+    "finance.expense.approve",
+    "finance.report.export",
+    "finance.reconciliation.view",
+)
+
 NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
     (
         "",
@@ -47,6 +56,8 @@ NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
                 ("finance.adjustment.approve", "finance.payment.verify", "finance.payment.record"),
             ),
             NavItem("Reconciliation", "finance:reconciliation", ("finance.reconciliation.view",)),
+            NavItem("Budgets", "finance:budgets", SPENDING_VIEWERS),
+            NavItem("Expenses", "finance:expense_requests", SPENDING_VIEWERS),
             NavItem("Reports", "reporting:finance", FINANCE_VIEWERS),
         ],
     ),

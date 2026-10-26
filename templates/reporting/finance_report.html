@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% load money %}
-{% block title %}Finance report · {{ SITE_NAME }}{% endblock %}
+{% block title %}Finance report · {{ SITE_NAME }}{% if expenses_by_category %}
+<div class="card mt-4 overflow-x-auto">
+  <h3 class="px-4 pt-4 text-sm font-semibold text-slate-700">Paid expenses by category</h3>
+  <table class="table-base mt-2"><tbody class="divide-y divide-slate-100">
+    {% for r in expenses_by_category %}<tr><td>{{ r.category }}</td><td class="text-right tabular-nums">{{ r.total|money }}</td></tr>{% endfor %}
+  </tbody></table>
+</div>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -51,10 +59,12 @@
 
 <h2 class="mt-8 text-lg font-semibold">Income {{ start|date:"j M Y" }} – {{ end|date:"j M Y" }}</h2>
 <p class="mt-1 text-sm text-slate-600">Only confirmed payments count as income. Refunds and reversals are counted when processed.</p>
-<div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+<div class="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-5">
   {% include "partials/_stat.html" with label="Received" value=gross|money %}
   {% include "partials/_stat.html" with label="Refunded" value=refunds|money %}
   {% include "partials/_stat.html" with label="Net income" value=net|money value_class="text-brand-700" %}
+  {% include "partials/_stat.html" with label="Paid expenses" value=spent|money %}
+  {% include "partials/_stat.html" with label="Cash position" value=cash_position|money hint="Net income − paid expenses" %}
 </div>
 <div class="card mt-4 overflow-x-auto">
   <table class="table-base">

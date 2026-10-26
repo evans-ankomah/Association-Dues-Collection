@@ -1,0 +1,21 @@
+{% load money %}
+{# Collection rate by level: one meter per level, single hue, value in text ink beside the bar. #}
+<figure>
+  <figcaption class="text-sm font-semibold text-slate-700">Collection rate by level</figcaption>
+  <ul class="mt-4 space-y-3">
+    {% for row in by_level %}
+    <li class="group relative">
+      <div class="flex items-baseline justify-between text-sm">
+        <span class="text-slate-700">{{ row.level }}</span>
+        <span class="tabular-nums text-slate-900">{{ row.rate|percent }}</span>
+      </div>
+      <div class="mt-1 h-2 rounded-full bg-slate-100" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ row.rate|floatformat:'0u'|default:'0' }}" aria-label="{{ row.level }} collection rate">
+        <div class="h-2 rounded-full bg-brand-600" style="width: {{ row.rate|floatformat:'2u'|default:'0' }}%"></div>
+      </div>
+      <p class="mt-1 text-xs text-slate-500">{{ row.collected|money }} of {{ row.assessed|money }} · {{ row.members }} member{{ row.members|pluralize }}</p>
+    </li>
+    {% empty %}
+    <li class="text-sm text-slate-500">No dues assessed this session.</li>
+    {% endfor %}
+  </ul>
+</figure>

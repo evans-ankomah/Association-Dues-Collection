@@ -41,6 +41,7 @@ NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
             NavItem("Dues", "finance:dues_types", FINANCE_VIEWERS),
             NavItem("Payments", "finance:payments", FINANCE_VIEWERS),
             NavItem("Waivers", "finance:waivers", ("dues.waiver.approve", "dues.assessment.create")),
+            NavItem("Reports", "reporting:finance", FINANCE_VIEWERS),
         ],
     ),
     ("Members", [NavItem("Roster", "members:roster", ("members.roster.view", "members.roster.edit"))]),

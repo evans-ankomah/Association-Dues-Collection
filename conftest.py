@@ -48,6 +48,14 @@ def membership(member, department, session):
 
 
 @pytest.fixture
+def make_membership(department, session):
+    def _make(**kwargs):
+        return MembershipFactory(department=department, academic_session=session, **kwargs)
+
+    return _make
+
+
+@pytest.fixture
 def login(client):
     def _login(user):
         assert client.login(email=user.email, password=TEST_PASSWORD)

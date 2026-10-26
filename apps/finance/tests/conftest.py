@@ -1,7 +1,5 @@
 import pytest
 
-from apps.common.tests.factories import MembershipFactory
-
 from .factories import AssessmentFactory, DuesTypeFactory
 
 
@@ -23,11 +21,3 @@ def dues_type(department, session, finsec):
 @pytest.fixture
 def assessment(dues_type, membership, finsec):
     return AssessmentFactory(dues_type=dues_type, department_membership=membership, assessed_by=finsec)
-
-
-@pytest.fixture
-def make_membership(department, session):
-    def _make(**kwargs):
-        return MembershipFactory(department=department, academic_session=session, **kwargs)
-
-    return _make

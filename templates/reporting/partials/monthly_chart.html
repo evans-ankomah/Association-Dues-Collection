@@ -1,0 +1,31 @@
+{% load money %}
+{# Single-series column chart: received payments per month. One hue, no legend; tooltip per bar; table view below. #}
+<figure x-data="{ table: false }">
+  <div class="flex items-start justify-between gap-4">
+    <figcaption class="text-sm font-semibold text-slate-700">Payments received by month</figcaption>
+    <button type="button" class="text-xs text-brand-700 hover:underline" @click="table = !table" x-text="table ? 'Show chart' : 'Show table'">Show table</button>
+  </div>
+  <div x-show="!table" class="mt-4">
+    <div class="relative flex h-40 items-end gap-[2px] border-b border-slate-200" role="img"
+      aria-label="Column chart of payments received each month for the last {{ monthly|length }} months">
+      {% for m in monthly %}
+      <div class="group relative flex h-full flex-1 items-end">
+        {# hit target is the full column height, larger than the bar itself #}
+        <div class="w-full rounded-t-[4px] bg-brand-600 transition-colors group-hover:bg-brand-800" style="height: {% if m.total %}max({{ m.pct|floatformat:'2u' }}%, 2px){% else %}0{% endif %}"></div>
+        <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs text-white shadow group-hover:block">
+          {{ m.month|date:"M Y" }} · {{ m.total|money }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-1 flex gap-[2px] text-[10px] text-slate-500" aria-hidden="true">
+      {% for m in monthly %}<span class="flex-1 text-center">{{ m.month|date:"M"|slice:":3" }}</span>{% endfor %}
+    </div>
+  </div>
+  <table x-show="table" x-cloak class="table-base mt-4">
+    <thead><tr><th>Month</th><th class="text-right">Received</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for m in monthly %}<tr><td>{{ m.month|date:"F Y" }}</td><td class="text-right tabular-nums">{{ m.total|money }}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</figure>

@@ -48,6 +48,11 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: config.settings.prod
           ALLOWED_HOSTS: example.com
+      - name: Static files collect with production storage
+        run: python manage.py collectstatic --noinput
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.prod
+          ALLOWED_HOSTS: example.com
       - name: Generate sample data
         run: python seed/generate_umat.py && python seed/validate_umat.py
       - name: Tests

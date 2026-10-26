@@ -1,0 +1,52 @@
+# Example production stack: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# Put a TLS-terminating proxy (Caddy, nginx, or the host's load balancer) in front of `web`.
+x-app: &app
+  build: .
+  image: depthub:latest
+  env_file: .env.prod
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_started
+  restart: unless-stopped
+
+services:
+  migrate:
+    <<: *app
+    command: python manage.py migrate --noinput
+    restart: "no"
+
+  web:
+    <<: *app
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *app
+    command: celery -A config worker -l info --concurrency 2
+
+  beat:
+    <<: *app
+    command: celery -A config beat -l info
+
+  db:
+    image: postgres:16-alpine
+    env_file: .env.prod
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -171,10 +171,13 @@ SITE_URL = env("SITE_URL", default="http://localhost:8000")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {"request_id": {"()": "apps.audit.context.RequestIdLogFilter"}},
     "formatters": {
-        "plain": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+        "plain": {"format": "%(asctime)s %(levelname)s %(name)s [%(request_id)s] %(message)s"},
     },
-    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "plain"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "plain", "filters": ["request_id"]}
+    },
     "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
     "loggers": {"django.db.backends": {"level": "WARNING"}},
 }

@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "vendor": "node scripts/vendor.mjs",
-    "build": "npm run vendor && tailwindcss -i static/src/app.css -o static/css/app.css --minify",
-    "dev": "tailwindcss -i static/src/app.css -o static/css/app.css --watch"
+    "build": "npm run vendor && tailwindcss -i assets/src/app.css -o static/css/app.css --minify",
+    "dev": "tailwindcss -i assets/src/app.css -o static/css/app.css --watch"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",

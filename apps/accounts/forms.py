@@ -3,6 +3,7 @@ from django.contrib.auth.forms import AuthenticationForm
 
 from apps.common.phone import normalize_gh_phone
 
+from . import throttle
 from .models import UserProfile
 
 INPUT = {"class": "field-input"}
@@ -22,10 +23,25 @@ class EmailAuthenticationForm(AuthenticationForm):
     error_messages = {
         "invalid_login": "That email and password don't match an active account.",
         "inactive": "This account is inactive. Contact your department administrator.",
+        "locked": "Too many failed attempts. Wait 15 minutes, or reset your password.",
     }
 
     def clean_username(self):
         return self.cleaned_data["username"].strip().lower()
+
+    def clean(self):
+        email = (self.cleaned_data.get("username") or "").strip().lower()
+        ip = throttle.client_ip(self.request)
+        if email and throttle.is_locked(email, ip):
+            raise forms.ValidationError(self.error_messages["locked"], code="locked")
+        try:
+            cleaned = super().clean()
+        except forms.ValidationError:
+            if email:
+                throttle.record_failure(email, ip)
+            raise
+        throttle.clear(email)
+        return cleaned
 
 
 class ProfileForm(forms.ModelForm):

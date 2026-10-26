@@ -51,6 +51,17 @@ Every seeded account uses the password `depthub-demo-2026` (change it with `--pa
 
 These emails come from the default generator seed (`--seed 2026`). The sample phone numbers use real Ghanaian network prefixes, so keep `SMS_BACKEND=disabled` whenever this data is loaded. The loader refuses to run when `DEBUG` is off.
 
+## Background jobs
+
+In development, Celery tasks run inline (`CELERY_TASK_ALWAYS_EAGER=true`), so no worker is needed. To run the real worker and scheduler against Redis, set `CELERY_TASK_ALWAYS_EAGER=false` and start:
+
+```bash
+celery -A config worker -l info --pool=solo   # --pool=solo is needed on Windows
+celery -A config beat -l info                 # daily dues reminders (09:00), hourly checkout clean-up
+```
+
+Reminders can also be run by hand: `python manage.py send_dues_reminders --dry-run` shows who would be reminded without sending anything.
+
 ## Everyday commands
 
 | Task | Command |

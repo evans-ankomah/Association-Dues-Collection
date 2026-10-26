@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -124,6 +125,17 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULE = {
+    # Times are Africa/Accra.
+    "dues-reminders-daily": {
+        "task": "apps.finance.tasks.send_dues_reminders",
+        "schedule": crontab(hour=9, minute=0),
+    },
+    "resolve-abandoned-checkouts": {
+        "task": "apps.finance.tasks.resolve_abandoned_checkouts",
+        "schedule": crontab(minute=15),
+    },
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

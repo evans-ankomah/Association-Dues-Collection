@@ -146,6 +146,11 @@ def payment_detail(request, pk):
         "can_verify": can_verify,
         "can_cancel": payment.payment_status == Payment.Status.PENDING
         and payment.recorded_by_id == request.user.pk,
+        "can_refund": payment.payment_status in (Payment.Status.CONFIRMED, Payment.Status.PARTIALLY_REFUNDED)
+        and has_any_perm(
+            request.user, ("finance.payment.verify", "finance.payment.record"), request.department
+        ),
+        "adjustments": payment.adjustments.order_by("-created_at"),
         "reject_form": RejectPaymentForm(),
         "history": AuditEvent.objects.filter(entity_type="payments", entity_id=payment.pk)
         .select_related("actor_user__profile")

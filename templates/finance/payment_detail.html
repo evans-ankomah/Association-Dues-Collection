@@ -78,6 +78,16 @@
     </form>
     {% endif %}
 
+    {% if adjustments %}
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Refunds and reversals</h2>
+      <ul class="mt-2 divide-y divide-slate-100 text-sm">
+        {% for adj in adjustments %}<li class="flex items-center justify-between gap-3 py-2"><a href="{% url 'finance:adjustment' adj.pk %}" class="text-brand-700 hover:underline">{{ adj.get_adjustment_type_display }} · {{ adj.amount|money }}</a>{% status_badge adj.adjustment_status %}</li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+    {% if can_refund and not is_payer %}<a href="{% url 'finance:request_adjustment' payment.pk %}" class="btn btn-secondary">Refund or reverse…</a>{% endif %}
+
     {% if can_cancel %}
     <form method="post" action="{% url 'finance:cancel_payment' payment.pk %}" onsubmit="return confirm('Withdraw this payment?')">
       {% csrf_token %}<button class="btn btn-secondary">Withdraw this payment</button>

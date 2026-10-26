@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import dues, member, online, payments, waivers
+from .views import adjustments, dues, member, online, payments, waivers
 
 app_name = "finance"
 
@@ -31,4 +31,9 @@ urlpatterns = [
     path("pay/callback/", online.paystack_callback, name="paystack_callback"),
     path("pay/status/<str:reference>/", online.online_status, name="online_status"),
     path("webhooks/paystack/", online.paystack_webhook, name="paystack_webhook"),
+    path("adjustments/", adjustments.adjustment_list, name="adjustments"),
+    path("adjustments/<uuid:pk>/", adjustments.adjustment_detail, name="adjustment"),
+    path("adjustments/<uuid:pk>/decide/", adjustments.decide_adjustment, name="decide_adjustment"),
+    path("adjustments/<uuid:pk>/process/", adjustments.process_adjustment, name="process_adjustment"),
+    path("payments/<uuid:pk>/refund/", adjustments.request_adjustment, name="request_adjustment"),
 ]

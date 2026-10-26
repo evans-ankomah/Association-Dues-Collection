@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ adjustment.get_adjustment_type_display }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% with p=adjustment.payment %}
+<div class="mb-6">
+  <a href="{% url 'finance:adjustments' %}" class="text-sm text-brand-700 hover:underline">← Refunds and reversals</a>
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ adjustment.get_adjustment_type_display }} of {{ adjustment.amount|money }} {% status_badge adjustment.adjustment_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ p.payer_membership.user.profile.full_name|default:"—" }} · <a href="{% url 'finance:payment' p.pk %}" class="text-brand-700 hover:underline">{{ p.amount|money:p.currency }} {{ p.method_label }} payment</a></p>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <section class="card p-4 text-sm">
+      <dl class="grid gap-3 sm:grid-cols-2">
+        <div class="sm:col-span-2"><dt class="text-slate-500">Reason</dt><dd class="whitespace-pre-line">{{ adjustment.reason }}</dd></div>
+        <div><dt class="text-slate-500">Requested</dt><dd>{{ adjustment.created_at|date:"j M Y, H:i" }} by {{ adjustment.requested_by.display_name }}</dd></div>
+        <div><dt class="text-slate-500">Decided</dt><dd>{% if adjustment.approved_by %}{{ adjustment.approved_by.display_name }}{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate-500">Processed</dt><dd>{{ adjustment.processed_at|date:"j M Y, H:i"|default:"—" }}</dd></div>
+        <div><dt class="text-slate-500">Refund reference</dt><dd class="tabular-nums">{{ adjustment.provider_reference|default:"—" }}</dd></div>
+      </dl>
+    </section>
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Dues affected</h2>
+      <table class="table-base mt-2">
+        <thead><tr><th>Dues</th><th class="text-right">Reversed</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for r in reversals %}<tr><td><a href="{% url 'finance:assessment' r.payment_allocation.dues_assessment.pk %}" class="text-brand-700 hover:underline">{{ r.payment_allocation.dues_assessment.dues_type.name }}</a></td><td class="text-right tabular-nums">{{ r.amount_reversed|money }}</td></tr>
+          {% empty %}<tr><td colspan="2" class="py-6 text-center text-slate-500">None. Refunded from money not applied to any dues.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <aside class="space-y-4">
+    {% if can_decide %}
+    <form method="post" action="{% url 'finance:decide_adjustment' adjustment.pk %}" class="card space-y-3 p-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold">Your decision</h2>
+      <label for="note" class="field-label">Note (optional)</label><textarea id="note" name="note" rows="2" class="field-input"></textarea>
+      <div class="flex gap-2"><button name="decision" value="approve" class="btn btn-primary">Approve</button><button name="decision" value="reject" class="btn btn-secondary">Reject</button></div>
+    </form>
+    {% endif %}
+    {% if can_process %}
+    <form method="post" action="{% url 'finance:process_adjustment' adjustment.pk %}" class="card space-y-3 p-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold">Record the refund</h2>
+      <p class="text-xs text-slate-600">Only do this once the money has actually been sent back.</p>
+      <label for="provider_reference" class="field-label">MoMo, bank or Paystack refund reference</label><input id="provider_reference" name="provider_reference" class="field-input">
+      <button class="btn btn-primary w-full">Mark as refunded</button>
+    </form>
+    {% endif %}
+  </aside>
+</div>
+{% endwith %}
+{% endblock %}

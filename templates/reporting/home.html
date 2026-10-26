@@ -64,6 +64,7 @@
   <div class="mt-4 flex flex-wrap gap-3">
     {% if q.pending_payments %}<a href="{% url 'finance:payments' %}?status=pending" class="card flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50"><span class="text-xl font-semibold tabular-nums text-amber-700">{{ q.pending_payments }}</span> payment{{ q.pending_payments|pluralize }} to verify{% if not finance.can_verify %} (Treasurer){% endif %}</a>{% endif %}
     {% if q.pending_waivers %}<a href="{% url 'finance:waivers' %}" class="card flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50"><span class="text-xl font-semibold tabular-nums text-amber-700">{{ q.pending_waivers }}</span> waiver{{ q.pending_waivers|pluralize }} awaiting a decision</a>{% endif %}
+    {% if q.pending_adjustments %}<a href="{% url 'finance:adjustments' %}" class="card flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50"><span class="text-xl font-semibold tabular-nums text-amber-700">{{ q.pending_adjustments }}</span> refund{{ q.pending_adjustments|pluralize }} awaiting approval</a>{% endif %}
     {% if q.pending_online %}<a href="{% url 'finance:payments' %}?status=pending&method=provider" class="card flex items-center gap-3 px-4 py-3 text-sm hover:bg-slate-50"><span class="text-xl font-semibold tabular-nums text-slate-700">{{ q.pending_online }}</span> online payment{{ q.pending_online|pluralize }} awaiting Paystack</a>{% endif %}
   </div>
   {% endif %}

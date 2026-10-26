@@ -9,3 +9,6 @@ payment_rejected = Signal()
 
 # Sent when a waiver request is approved or rejected. Args: waiver.
 waiver_decided = Signal()
+
+# Sent after a refund, reversal or correction is processed. Args: adjustment.
+adjustment_processed = Signal()

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Refund or reverse · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'finance:payment' payment.pk as back %}
+{% include "partials/_page_header.html" with title="Refund or reverse a payment" subtitle=payment.payer_membership.user.profile.full_name back_url=back back_label="Payment" %}
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <form method="post" class="card space-y-5 p-6 lg:col-span-2" novalidate>
+    {% csrf_token %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div><label for="adjustment_type" class="field-label">Type</label>
+        <select id="adjustment_type" name="adjustment_type" class="field-input">{% for v, l in types %}<option value="{{ v }}" {% if posted.adjustment_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+        <p class="mt-1 text-xs text-slate-500">Refund: money goes back to the payer. Reversal: a payment recorded in error.</p></div>
+      <div><label for="amount" class="field-label">Amount (GHS) <span class="text-red-600" aria-hidden="true">*</span></label>
+        <input id="amount" name="amount" type="number" step="0.01" min="0.01" max="{{ refundable }}" value="{{ posted.amount }}" class="field-input" required>
+        <p class="mt-1 text-xs text-slate-500">Up to {{ refundable|money }}.</p></div>
+    </div>
+    <div><label for="reason" class="field-label">Reason <span class="text-red-600" aria-hidden="true">*</span></label>
+      <textarea id="reason" name="reason" rows="3" class="field-input" required placeholder="e.g. Duplicate MoMo payment: dues sent twice.">{{ posted.reason }}</textarea></div>
+
+    {% if allocations %}
+    <fieldset>
+      <legend class="field-label">Take it out of these dues</legend>
+      <p class="mb-2 text-xs text-slate-600">The member will owe these amounts again once the refund is processed.{% if unallocated %} {{ unallocated|money }} of this payment isn't applied to any dues and is used first.{% endif %}</p>
+      <table class="table-base">
+        <thead><tr><th>Dues</th><th class="text-right">Applied</th><th class="text-right">Can reverse</th><th class="text-right">Reverse</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for al in allocations %}
+          <tr><td>{{ al.dues_assessment.dues_type.name }}</td><td class="text-right tabular-nums">{{ al.amount_allocated|money }}</td><td class="text-right tabular-nums">{{ al.reversible|money }}</td>
+            <td class="text-right"><label class="sr-only" for="rev_{{ al.pk }}">Reverse from {{ al.dues_assessment.dues_type.name }}</label><input id="rev_{{ al.pk }}" name="rev_{{ al.pk }}" type="number" step="0.01" min="0" max="{{ al.reversible }}" class="field-input w-28 text-right"></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </fieldset>
+    {% endif %}
+    <button class="btn btn-primary">Send for approval</button>
+  </form>
+  <aside class="card h-fit p-4 text-sm text-slate-700">
+    <p class="font-semibold">How refunds work</p>
+    <ol class="mt-2 list-decimal space-y-1 pl-4">
+      <li>You request it here.</li>
+      <li>The HoD or faculty adviser approves it.</li>
+      <li>A finance officer returns the money and records the MoMo or bank reference.</li>
+    </ol>
+    <p class="mt-2 text-xs text-slate-500">Balances only change at step 3. Online (Paystack) refunds are made from the Paystack dashboard; record the refund reference here.</p>
+  </aside>
+</div>
+{% endblock %}

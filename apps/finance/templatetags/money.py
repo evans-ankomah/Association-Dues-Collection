@@ -50,6 +50,16 @@ BADGE_STYLES = {
     "late": "bg-amber-100 text-amber-800",
     "excused": "bg-sky-100 text-sky-800",
     "absent": "bg-red-100 text-red-800",
+    # service requests
+    "triaged": "bg-sky-100 text-sky-800",
+    "in_progress": "bg-sky-100 text-sky-800",
+    "waiting": "bg-amber-100 text-amber-800",
+    "resolved": "bg-brand-100 text-brand-800",
+    "restricted": "bg-violet-100 text-violet-800",
+    "staff_only": "bg-slate-200 text-slate-600",
+    "low": "bg-slate-100 text-slate-700",
+    "normal": "bg-slate-100 text-slate-700",
+    "high": "bg-amber-100 text-amber-800",
 }
 
 LABELS = {
@@ -57,6 +67,10 @@ LABELS = {
     "partially_refunded": "Part refunded",
     "pending_approval": "Awaiting approval",
     "no_show": "No show",
+    "in_progress": "In progress",
+    "waiting": "Waiting on requester",
+    "staff_only": "Staff only",
+    "restricted": "Private",
 }
 
 

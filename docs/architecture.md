@@ -25,6 +25,11 @@ Browser ──HTTP──> Django (gunicorn)
 | `audit` | Append-only audit events, request ids |
 | `finance` | Dues types, assessments, waivers, payments, allocations, receipts, Paystack, refunds, reconciliation, budgets, expenses, reminders |
 | `communications` | Notices, notifications (in-app, email, SMS) |
+| `events` | Events, registration, waitlists, attendance |
+| `service_requests` | Service requests, comments, restricted visibility |
+| `documents` | Private document store, versions, review |
+| `workspace` | Committees, meetings, tasks |
+| `resources` | Assets and resource bookings |
 | `reporting` | Dashboards, finance report, exports |
 | `api` | REST API v1 and OpenAPI schema |
 
@@ -41,6 +46,27 @@ Views and API endpoints are thin. Business rules live in `apps/*/services*.py`, 
 - A payment counts as income only once it's `confirmed` (or later refunded). Online payments are confirmed only from a signed Paystack webhook or a server-side verify call, and only when status, reference, currency and amount all match.
 - Completed records are never edited or deleted. Corrections go through refunds, reversals or voids, each requested, approved and processed by different people.
 - Only `paid` expenses count as cash outflow.
+
+## Operations rules
+
+- **Events.** Members register themselves; attendance is recorded by an organiser, never
+  self-asserted. A full event waitlists rather than refusing, and cancelling a seat promotes
+  the longest-waiting member. Drafts are invisible to members, and a user with no role in a
+  department sees none of its events.
+- **Service requests.** A `restricted` request is visible only to its requester and assignee —
+  `requests.manage` alone never opens one, so a welfare case never reaches the general queue.
+  Sensitive types (welfare, result queries) are forced to restricted on submission, so a
+  tampered form field can't publish one. `staff_only` comments are never shown to the requester.
+- **Documents.** Files live outside `MEDIA_ROOT` in the `documents` storage backend and are
+  never reachable by URL; the only read path is a view that checks `can_read` first, and every
+  download is audited. Storage keys are opaque UUIDs scoped by department. Size and MIME type
+  are validated before anything is written, SHA-256 is recorded, and a new version supersedes
+  rather than overwrites. A document is reviewed by someone other than its uploader.
+- **Bookings.** An asset can be held by one booking at a time. That is enforced by a Postgres
+  `ExclusionConstraint` (`btree_gist`, `tstzrange` with an exclusive end) over approved and
+  checked-out bookings, so two approvals racing each other still can't double-book; the service
+  turns the resulting `IntegrityError` into a readable message. Requested bookings may overlap
+  freely, back-to-back bookings are allowed, and nobody approves their own.
 
 ## Department and session context
 

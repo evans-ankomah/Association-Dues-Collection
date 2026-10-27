@@ -30,9 +30,14 @@ The **member base** is these permissions:
 | Department Secretary | publish notices, committees, roster view and edit |
 | President | publish notices, committees, events, **approve expenses (step 1)**, roster view, requests |
 | HoD / Faculty Adviser | **approve waivers, refunds, budgets, expenses (step 2)**, report export, audit, roster view. No member base. |
+| Asset Custodian | assets and bookings, requests. No member base — but `assets.manage` also lets them *request* a booking, which someone else must then approve. |
 | Auditor | read-only: audit, reconciliation, report export |
 | Platform Administrator | technical admin (Django admin), roster edit, audit. **No finance permissions.** |
 | Executive Officer | committees, events, roster view |
+
+`committees.manage` also governs documents, and `requests.manage` governs the service-request
+queue. Phase 3 added no new permission codes: the catalogue still matches the seed exactly, which
+`test_catalog_matches_seed_data` asserts.
 
 ## Separation of duties, enforced in code
 
@@ -45,6 +50,11 @@ The **member base** is these permissions:
 | Expense requests: the requester can't approve, and nobody approves both steps | `finance.services.spending.decide_request` |
 | An expense is verified by someone other than its recorder | `finance.services.spending.verify_expense` |
 | The platform admin's Django admin access never grants finance authority (finance actions go through services that check finance permissions) | `accounts.models.User.has_perm`, `finance.services.*` |
+| Attendance is recorded by an organiser, never by the member themselves | `events.services.check_in` |
+| A restricted service request opens only to its requester and assignee; `requests.manage` alone is not enough | `service_requests.services.is_handling_officer` |
+| Sensitive request types are forced to restricted on submission | `service_requests.services.submit` |
+| A document is reviewed by someone other than its uploader | `documents.services.review` |
+| Whoever requests a booking can't approve it | `resources.services.decide_booking` |
 
 ## Assigning roles
 

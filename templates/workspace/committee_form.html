@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Committee · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'workspace:committees' as back %}
+{% include "partials/_page_header.html" with title=committee|yesno:"Edit committee,New committee" subtitle=current_session back_url=back back_label="Committees" %}
+<form method="post" class="card max-w-2xl space-y-4 p-6" novalidate>
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  {% include "partials/_field.html" with field=form.name %}
+  {% include "partials/_field.html" with field=form.description %}
+  {% include "partials/_field.html" with field=form.chair_membership %}
+  <div class="flex flex-wrap gap-3">
+    <button class="btn btn-primary">Save</button>
+    <a href="{{ back }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

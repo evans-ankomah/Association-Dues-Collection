@@ -16,7 +16,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from apps.access.services import has_perm
+from apps.access.services import has_any_perm, has_perm
 from apps.audit.services import record, snapshot
 
 from .models import BLOCKING_STATES, Asset, ResourceBooking
@@ -87,11 +87,16 @@ def update_asset(asset, *, actor, **fields):
 def request_booking(asset, *, actor, starts_at, ends_at, purpose):
     """Ask for an asset. Overlapping requests are allowed; only one can be approved."""
     department = asset.department
-    require_perm(actor, REQUEST, department)
+    # A custodian holds assets.manage but not requests.create, and still needs to be able
+    # to book an asset — they just can't be the one who approves it.
+    if not has_any_perm(actor, (REQUEST, MANAGE), department):
+        raise PermissionDenied(f"Missing permission {REQUEST}.")
     if ends_at <= starts_at:
         raise ResourceError("The end must be after the start.")
     if starts_at < timezone.now():
         raise ResourceError("Bookings can't start in the past.")
+    # Re-read under a lock: the caller's copy may predate the asset going out of service.
+    asset = Asset.objects.select_for_update().get(pk=asset.pk)
     if not asset.is_bookable:
         raise ResourceError(f"This asset is {asset.get_availability_status_display().lower()}.")
 
@@ -208,7 +213,7 @@ def cancel_booking(booking, *, actor):
     is_requester = booking.requested_by_user_id == actor.pk
     if not is_requester:
         require_perm(actor, MANAGE, department)
-    elif not has_perm(actor, REQUEST, department):
+    elif not has_any_perm(actor, (REQUEST, MANAGE), department):
         raise PermissionDenied(f"Missing permission {REQUEST}.")
 
     booking = ResourceBooking.objects.select_for_update().get(pk=booking.pk)

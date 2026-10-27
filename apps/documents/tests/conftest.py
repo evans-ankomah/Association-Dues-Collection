@@ -1,3 +1,7 @@
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -5,16 +9,22 @@ from apps.documents import services as svc
 
 
 @pytest.fixture(autouse=True)
-def private_document_root(tmp_path, settings):
-    """Keep every test's uploads in a throwaway directory, never the real document store."""
+def private_document_root(settings):
+    """Keep every test's uploads in a throwaway directory, never the real document store.
+
+    Uses its own mkdtemp rather than pytest's tmp_path: tmp_path needs to scan
+    %TEMP%/pytest-of-<user>, which fails outright if that directory is left unreadable.
+    """
+    root = Path(tempfile.mkdtemp(prefix="depthub-documents-"))
     settings.STORAGES = {
         **settings.STORAGES,
         "documents": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "OPTIONS": {"location": str(tmp_path / "documents")},
+            "OPTIONS": {"location": str(root / "documents")},
         },
     }
-    yield tmp_path
+    yield root
+    shutil.rmtree(root, ignore_errors=True)
 
 
 @pytest.fixture

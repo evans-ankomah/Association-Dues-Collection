@@ -68,6 +68,8 @@ def add_member(committee, *, actor, membership, role_title=None):
     require_perm(actor, MANAGE, department)
     if membership.department_id != department.pk:
         raise WorkspaceError("That member belongs to another department.")
+    # Re-read under a lock: the caller's copy may predate an archive.
+    committee = Committee.objects.select_for_update().get(pk=committee.pk)
     if committee.committee_status == Committee.Status.ARCHIVED:
         raise WorkspaceError("This committee is archived.")
 

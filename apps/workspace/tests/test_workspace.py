@@ -5,9 +5,6 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 
 from apps.common.tests.factories import (
-    AcademicSessionFactory,
-    DepartmentFactory,
-    MembershipFactory,
     UserFactory,
 )
 from apps.workspace import services as svc
@@ -89,12 +86,16 @@ def test_scheduling_and_holding_a_meeting(department, secretary, committee):
     assert meeting.meeting_status == Meeting.Status.HELD
 
 
-def test_attaching_minutes_marks_the_meeting_held(department, secretary, tmp_path, settings):
+def test_attaching_minutes_marks_the_meeting_held(department, secretary, settings):
+    import shutil
+    import tempfile
+
+    root = tempfile.mkdtemp(prefix="depthub-minutes-")
     settings.STORAGES = {
         **settings.STORAGES,
         "documents": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "OPTIONS": {"location": str(tmp_path)},
+            "OPTIONS": {"location": root},
         },
     }
     from django.core.files.uploadedfile import SimpleUploadedFile
@@ -118,6 +119,7 @@ def test_attaching_minutes_marks_the_meeting_held(department, secretary, tmp_pat
     meeting.refresh_from_db()
     assert meeting.minutes_document == document
     assert meeting.meeting_status == Meeting.Status.HELD
+    shutil.rmtree(root, ignore_errors=True)
 
 
 # --- tasks ------------------------------------------------------------------------------------
@@ -174,18 +176,18 @@ def test_overdue_tasks_are_counted(department, secretary, member):
 # --- cross-department leaks --------------------------------------------------------------------
 
 
-def test_committees_management_does_not_leak_across_departments(secretary, department, session):
-    other_dept = DepartmentFactory(institution=department.institution)
-    other_session = AcademicSessionFactory(institution=department.institution, name="other")
+def test_committees_management_does_not_leak_across_departments(
+    secretary, other_department, other_session, make_other_membership
+):
     with pytest.raises(PermissionDenied):
         svc.create_committee(
             actor=secretary,
-            department=other_dept,
+            department=other_department,
             academic_session=other_session,
             name="Theirs",
         )
     foreign = Committee.objects.create(
-        department=other_dept,
+        department=other_department,
         academic_session=other_session,
         name="Theirs",
         created_by=UserFactory(),
@@ -193,21 +195,19 @@ def test_committees_management_does_not_leak_across_departments(secretary, depar
     with pytest.raises(PermissionDenied):
         svc.set_committee_status(foreign, actor=secretary, status=Committee.Status.ARCHIVED)
     with pytest.raises(PermissionDenied):
-        svc.add_member(foreign, actor=secretary, membership=MembershipFactory(department=other_dept))
+        svc.add_member(foreign, actor=secretary, membership=make_other_membership())
 
 
-def test_a_committee_cannot_seat_a_member_of_another_department(committee, secretary, department):
-    other_dept = DepartmentFactory(institution=department.institution)
-    foreign = MembershipFactory(department=other_dept)
+def test_a_committee_cannot_seat_a_member_of_another_department(committee, secretary, make_other_membership):
     with pytest.raises(WorkspaceError, match="another department"):
-        svc.add_member(committee, actor=secretary, membership=foreign)
+        svc.add_member(committee, actor=secretary, membership=make_other_membership())
 
 
-def test_a_task_cannot_be_linked_to_another_departments_committee(department, secretary):
-    other_dept = DepartmentFactory(institution=department.institution)
-    other_session = AcademicSessionFactory(institution=department.institution, name="x")
+def test_a_task_cannot_be_linked_to_another_departments_committee(
+    department, secretary, other_department, other_session
+):
     foreign = Committee.objects.create(
-        department=other_dept,
+        department=other_department,
         academic_session=other_session,
         name="Theirs",
         created_by=UserFactory(),
@@ -216,12 +216,11 @@ def test_a_task_cannot_be_linked_to_another_departments_committee(department, se
         svc.create_task(actor=secretary, department=department, title="Cross link", committee=foreign)
 
 
-def test_minutes_must_belong_to_the_same_department(department, secretary):
+def test_minutes_must_belong_to_the_same_department(department, secretary, other_department):
     from apps.documents.models import Document
 
-    other_dept = DepartmentFactory(institution=department.institution)
     foreign = Document.objects.create(
-        department=other_dept,
+        department=other_department,
         uploaded_by=secretary,
         title="Their minutes",
         category="minutes",

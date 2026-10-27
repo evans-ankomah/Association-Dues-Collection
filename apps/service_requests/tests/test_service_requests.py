@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import PermissionDenied
 
-from apps.common.tests.factories import DepartmentFactory, MembershipFactory, UserFactory
+from apps.common.tests.factories import UserFactory
 from apps.service_requests import services as svc
 from apps.service_requests.models import ServiceRequest, ServiceRequestComment
 from apps.service_requests.services import ServiceRequestError
@@ -188,11 +188,12 @@ def test_empty_comments_are_refused(make_request, member):
 # --- cross-department leaks --------------------------------------------------------------------
 
 
-def test_requests_do_not_leak_across_departments(officer, department, member):
-    other_dept = DepartmentFactory(institution=department.institution)
+def test_requests_do_not_leak_across_departments(
+    officer, department, other_department, make_other_membership
+):
     foreign = ServiceRequest.objects.create(
-        department=other_dept,
-        requester_membership=MembershipFactory(department=other_dept),
+        department=other_department,
+        requester_membership=make_other_membership(),
         request_type="admin_question",
         title="Their business",
         description="Not yours.",

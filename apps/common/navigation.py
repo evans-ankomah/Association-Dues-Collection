@@ -72,6 +72,10 @@ NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
             NavItem("Documents", "documents:documents", ("committees.manage",)),
         ],
     ),
+    (
+        "Resources",
+        [NavItem("Assets", "resources:assets"), NavItem("Bookings", "resources:bookings")],
+    ),
     ("Members", [NavItem("Roster", "members:roster", ("members.roster.view", "members.roster.edit"))]),
     ("Account", [NavItem("Profile", "accounts:profile")]),
     ("Administration", [NavItem("Platform admin", "admin:index", platform_admin_only=True)]),

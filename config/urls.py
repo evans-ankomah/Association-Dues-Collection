@@ -17,6 +17,7 @@ urlpatterns = [
     path("communications/", include("apps.communications.urls")),
     path("events/", include("apps.events.urls")),
     path("requests/", include("apps.service_requests.urls")),
+    path("documents/", include("apps.documents.urls")),
     path("reports/", include("apps.reporting.urls")),
     path("api/", include("apps.api.urls")),
     path("django-admin/", admin.site.urls),

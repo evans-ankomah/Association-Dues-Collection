@@ -41,6 +41,7 @@ LOCAL_APPS = [
     "apps.communications",
     "apps.events",
     "apps.service_requests",
+    "apps.documents",
     "apps.reporting",
     "apps.api",
 ]
@@ -112,7 +113,29 @@ MEDIA_ROOT = BASE_DIR / "media"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    # Documents are private: kept outside MEDIA_ROOT, never served by a URL, and only
+    # ever streamed through a permission-checked view.
+    "documents": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": env("DOCUMENT_ROOT", default=str(BASE_DIR / "private" / "documents"))},
+    },
 }
+DOCUMENT_MAX_BYTES = env.int("DOCUMENT_MAX_BYTES", default=25 * 1024 * 1024)
+DOCUMENT_ALLOWED_TYPES = env.list(
+    "DOCUMENT_ALLOWED_TYPES",
+    default=[
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/msword",
+        "application/vnd.ms-excel",
+        "text/plain",
+        "text/csv",
+        "image/jpeg",
+        "image/png",
+    ],
+)
 
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = env("EMAIL_HOST", default="localhost")

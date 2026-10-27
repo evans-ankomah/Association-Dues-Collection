@@ -22,6 +22,7 @@ env/
 *.log
 db.sqlite3
 media/
+private/
 staticfiles/
 celerybeat-schedule*
 dump.rdb

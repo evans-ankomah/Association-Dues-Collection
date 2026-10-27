@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ event.title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'events:events' %}" class="text-sm text-brand-700 hover:underline">← Events</a>
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ event.title }} {% status_badge event.event_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ event.starts_at|date:"j M Y, H:i" }} – {{ event.ends_at|date:"j M Y, H:i" }}{% if event.venue_text %} · {{ event.venue_text }}{% endif %}{% if event.capacity %} · {{ event.seats_left }} of {{ event.capacity }} seats left{% endif %}</p>
+</div>
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    {% if event.description %}
+    <section class="card p-4"><h2 class="text-sm font-semibold text-slate-700">About</h2><p class="mt-2 whitespace-pre-line text-sm">{{ event.description }}</p></section>
+    {% endif %}
+    {% if summary %}
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Turnout</h2>
+      <div class="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {% include "partials/_stat.html" with label="Registered" value=summary.registered %}
+        {% include "partials/_stat.html" with label="Present" value=summary.present %}
+        {% include "partials/_stat.html" with label="Waitlisted" value=summary.waitlisted %}
+        {% include "partials/_stat.html" with label="No shows" value=summary.no_shows %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+  <aside class="space-y-4">
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Details</h2>
+      <dl class="mt-3 grid gap-3 text-sm">
+        <div><dt class="text-slate-500">Type</dt><dd>{{ event.get_event_type_display|default:event.event_type }}</dd></div>
+        <div><dt class="text-slate-500">Registration</dt><dd>{% if event.registration_required %}Required{% else %}Open to all{% endif %}</dd></div>
+        {% if can_manage and event.related_budget %}<div><dt class="text-slate-500">Budget</dt><dd><a href="{% url 'finance:budget' event.related_budget.pk %}" class="text-brand-700 hover:underline">{{ event.related_budget.name }}</a></dd></div>{% endif %}
+      </dl>
+    </section>
+    {% if my_registration %}
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold">Your place {% status_badge my_registration.registration_status %}</h2>
+      {% if my_registration.registration_status != "attended" %}
+      <form method="post" action="{% url 'events:cancel_registration' my_registration.pk %}" class="mt-3">{% csrf_token %}<button class="btn btn-secondary w-full">Cancel my registration</button></form>
+      {% endif %}
+    </section>
+    {% elif can_register %}
+    <form method="post" action="{% url 'events:register' event.pk %}">{% csrf_token %}<button class="btn btn-primary w-full">{% if event.is_full %}Join the waiting list{% else %}Register{% endif %}</button></form>
+    {% endif %}
+    {% if can_manage %}
+    <section class="card space-y-3 p-4">
+      <h2 class="text-sm font-semibold">Organiser</h2>
+      <a href="{% url 'events:attendance' event.pk %}" class="btn btn-secondary w-full">Registrations &amp; attendance</a>
+      <form method="post" action="{% url 'events:action' event.pk %}" class="flex flex-wrap gap-2">
+        {% csrf_token %}
+        {% if can_edit %}<a href="{% url 'events:edit' event.pk %}" class="btn btn-secondary">Edit</a>{% endif %}
+        {% if can_publish %}<button name="action" value="publish" class="btn btn-primary">Publish</button>{% endif %}
+        {% if can_complete %}<button name="action" value="complete" class="btn btn-primary">Mark completed</button>{% endif %}
+        {% if event.event_status != "cancelled" and event.event_status != "completed" %}<button name="action" value="cancelled" class="btn btn-danger">Cancel event</button>{% endif %}
+      </form>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

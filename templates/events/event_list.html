@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Events · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Events</h1><p class="mt-1 text-sm text-slate-600">Orientations, seminars, hackathons and social activities.</p></div>
+  {% if can_manage %}<a href="{% url 'events:create' %}" class="btn btn-primary">New event</a>{% endif %}
+</div>
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter events">
+  <a href="?show=upcoming" class="rounded-full px-3 py-1 {% if show == 'upcoming' %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Upcoming</a>
+  <a href="?show=past" class="rounded-full px-3 py-1 {% if show == 'past' %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Past</a>
+  <a href="?show=all" class="rounded-full px-3 py-1 {% if show == 'all' %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">All</a>
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Event</th><th>When</th><th>Venue</th><th>Status</th><th class="text-right">Seats</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for e in page %}
+      <tr class="hover:bg-slate-50">
+        <td>
+          <a href="{% url 'events:detail' e.pk %}" class="font-medium text-brand-700 hover:underline">{{ e.title }}</a>
+          <p class="text-xs text-slate-500">{{ e.get_event_type_display|default:e.event_type }}{% if e.pk in my_event_ids %} · <span class="text-brand-700">you're registered</span>{% endif %}</p>
+        </td>
+        <td>{{ e.starts_at|date:"j M Y, H:i" }}</td>
+        <td class="whitespace-normal">{{ e.venue_text|default:"—" }}</td>
+        <td>{% status_badge e.event_status %}</td>
+        <td class="text-right tabular-nums">{% if e.capacity %}{{ e.seats_left }} of {{ e.capacity }}{% else %}—{% endif %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="5" class="py-10 text-center text-slate-500">No events.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

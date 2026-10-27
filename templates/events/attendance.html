@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Attendance · {{ event.title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'events:detail' event.pk %}" class="text-sm text-brand-700 hover:underline">← {{ event.title }}</a>
+  <h1 class="mt-1 text-2xl font-semibold">Registrations &amp; attendance</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ event.starts_at|date:"j M Y, H:i" }}{% if event.venue_text %} · {{ event.venue_text }}{% endif %}</p>
+</div>
+<div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="Registered" value=summary.registered %}
+  {% include "partials/_stat.html" with label="Present" value=summary.present %}
+  {% include "partials/_stat.html" with label="Waitlisted" value=summary.waitlisted %}
+  {% include "partials/_stat.html" with label="No shows" value=summary.no_shows %}
+</div>
+<section class="card mb-6 p-4">
+  <h2 class="text-sm font-semibold text-slate-700">Check a member in</h2>
+  <label for="member-q" class="sr-only">Search members</label>
+  <input id="member-q" type="search" name="q" class="field-input mt-2" placeholder="Name, email or student number"
+         hx-get="{% url 'events:member_search' event.pk %}" hx-trigger="input changed delay:300ms, search" hx-target="#member-results">
+  <div id="member-results" class="mt-2" aria-live="polite"></div>
+</section>
+<div class="card overflow-x-auto">
+  <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Registrations</h2>
+  <table class="table-base mt-2">
+    <thead><tr><th>Member</th><th>Level</th><th>Registered</th><th>Status</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in registrations %}
+      <tr class="hover:bg-slate-50">
+        <td>{{ r.department_membership.user.display_name }}</td>
+        <td>{{ r.department_membership.level_code|default:"—" }}</td>
+        <td>{{ r.registered_at|date:"j M Y, H:i" }}</td>
+        <td>{% status_badge r.registration_status %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="4" class="py-10 text-center text-slate-500">Nobody has registered.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="card mt-6 overflow-x-auto">
+  <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Attendance</h2>
+  <table class="table-base mt-2">
+    <thead><tr><th>Member</th><th>Checked in</th><th>How</th><th>Status</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in attendance %}
+      <tr class="hover:bg-slate-50">
+        <td>{{ a.department_membership.user.display_name }}</td>
+        <td>{{ a.checked_in_at|date:"j M Y, H:i" }}</td>
+        <td>{{ a.get_checkin_method_display|default:"—" }}</td>
+        <td>{% status_badge a.attendance_status %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="4" class="py-10 text-center text-slate-500">Nobody checked in yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

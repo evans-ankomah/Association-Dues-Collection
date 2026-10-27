@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Event · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'events:events' as back %}
+{% include "partials/_page_header.html" with title=event|yesno:"Edit event,New event" subtitle=current_session back_url=back back_label="Events" %}
+<form method="post" class="card max-w-3xl space-y-4 p-6" novalidate>
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  {% include "partials/_field.html" with field=form.title %}
+  {% include "partials/_field.html" with field=form.event_type %}
+  {% include "partials/_field.html" with field=form.description %}
+  {% include "partials/_field.html" with field=form.venue_text %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "partials/_field.html" with field=form.starts_at %}
+    {% include "partials/_field.html" with field=form.ends_at %}
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "partials/_field.html" with field=form.capacity %}
+    {% include "partials/_field.html" with field=form.related_budget %}
+  </div>
+  {% include "partials/_field.html" with field=form.registration_required %}
+  <div class="flex flex-wrap gap-3">
+    <button name="publish" class="btn btn-primary">Save and publish</button>
+    <button name="draft" class="btn btn-secondary">Save draft</button>
+    <a href="{{ back }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

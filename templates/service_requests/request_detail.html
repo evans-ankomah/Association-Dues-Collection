@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ req.title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'service_requests:requests' %}" class="text-sm text-brand-700 hover:underline">← Requests</a>
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ req.title }} {% status_badge req.request_status %}{% if req.is_restricted %}{% status_badge "restricted" %}{% endif %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ req.request_type|cut:"_"|capfirst }} · raised by {{ req.requester_membership.user.display_name }} on {{ req.submitted_at|date:"j M Y" }}{% if req.assigned_to_user %} · with {{ req.assigned_to_user.display_name }}{% endif %}{% if req.is_overdue %} · <span class="text-red-600">overdue</span>{% endif %}</p>
+</div>
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Details</h2>
+      <p class="mt-2 whitespace-pre-line text-sm">{{ req.description }}</p>
+      {% if req.is_restricted %}<p class="mt-3 text-xs text-violet-700">Kept private to {{ req.requester_membership.user.display_name }} and the officer handling it.</p>{% endif %}
+    </section>
+    {% if req.resolution_summary %}
+    <section class="card p-4"><h2 class="text-sm font-semibold text-slate-700">Outcome</h2><p class="mt-2 whitespace-pre-line text-sm">{{ req.resolution_summary }}</p>{% if req.resolved_at %}<p class="mt-1 text-xs text-slate-500">{{ req.resolved_at|date:"j M Y, H:i" }}</p>{% endif %}</section>
+    {% endif %}
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Conversation</h2>
+      <ol class="mt-3 space-y-3">
+        {% for c in comments %}
+        <li class="border-l-2 pl-3 {% if c.visibility == 'staff_only' %}border-slate-400{% else %}border-brand-500{% endif %}">
+          <p class="text-xs text-slate-500">{{ c.author_user.display_name }} · {{ c.created_at|date:"j M Y, H:i" }}{% if c.visibility == 'staff_only' %} · {% status_badge "staff_only" %}{% endif %}</p>
+          <p class="mt-1 whitespace-pre-line text-sm">{{ c.body }}</p>
+        </li>
+        {% empty %}<li class="text-sm text-slate-500">Nothing yet.</li>{% endfor %}
+      </ol>
+      <form method="post" action="{% url 'service_requests:action' req.pk %}" class="mt-4 space-y-2">
+        {% csrf_token %}
+        <label for="body" class="field-label">Add a comment</label>
+        <textarea id="body" name="body" rows="3" class="field-input" required></textarea>
+        {% if is_officer %}
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="staff_only"> Staff-only note (the requester won't see this)</label>
+        {% endif %}
+        <button name="action" value="comment" class="btn btn-primary">Post</button>
+      </form>
+    </section>
+  </div>
+  <aside class="space-y-4">
+    {% if is_officer %}
+    <section class="card space-y-3 p-4">
+      <h2 class="text-sm font-semibold">Handle this request</h2>
+      <form method="post" action="{% url 'service_requests:action' req.pk %}" class="space-y-2">
+        {% csrf_token %}
+        <label for="assignee" class="field-label">Assign to</label>
+        <select id="assignee" name="assignee" class="field-input">
+          <option value="">Nobody</option>
+          {% for o in officers %}<option value="{{ o.pk }}" {% if o.pk == req.assigned_to_user_id %}selected{% endif %}>{{ o.display_name }}</option>{% endfor %}
+        </select>
+        <button name="action" value="assign" class="btn btn-secondary w-full">Assign</button>
+      </form>
+      <form method="post" action="{% url 'service_requests:action' req.pk %}" class="space-y-2">
+        {% csrf_token %}
+        <label for="status" class="field-label">Status</label>
+        <select id="status" name="status" class="field-input">
+          {% for v, l in statuses %}<option value="{{ v }}" {% if v == req.request_status %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+        <label for="summary" class="field-label">Outcome (needed to resolve or reject)</label>
+        <textarea id="summary" name="summary" rows="2" class="field-input">{{ req.resolution_summary|default:"" }}</textarea>
+        <button name="action" value="status" class="btn btn-primary w-full">Update</button>
+      </form>
+    </section>
+    {% endif %}
+    {% if can_close %}
+    <form method="post" action="{% url 'service_requests:action' req.pk %}">{% csrf_token %}<button name="action" value="close" class="btn btn-secondary w-full">Close this request</button></form>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

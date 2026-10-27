@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}New request · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+{% url 'service_requests:requests' as back %}
+{% include "partials/_page_header.html" with title="New request" subtitle="Tell us what you need and follow it here." back_url=back back_label="Requests" %}
+<form method="post" class="card max-w-2xl space-y-4 p-6" novalidate
+      x-data="{ kind: '{{ form.request_type.value|default:'introductory_letter' }}' }">
+  {% csrf_token %}
+  {% include "partials/_form_errors.html" %}
+  {% include "partials/_field.html" with field=form.request_type %}
+  {% include "partials/_field.html" with field=form.title %}
+  {% include "partials/_field.html" with field=form.description %}
+  <div class="grid gap-4 sm:grid-cols-2">
+    {% include "partials/_field.html" with field=form.priority %}
+    <div x-show="!['welfare','result_query'].includes(kind)" x-cloak>
+      {% include "partials/_field.html" with field=form.visibility_level %}
+    </div>
+  </div>
+  <p x-show="['welfare','result_query'].includes(kind)" x-cloak class="rounded-lg bg-violet-50 p-3 text-sm text-violet-800">
+    This kind of request is always kept private — only you and the officer handling it will see it.
+  </p>
+  <div class="flex flex-wrap gap-3">
+    <button class="btn btn-primary">Submit request</button>
+    <a href="{{ back }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Requests · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Service requests</h1><p class="mt-1 text-sm text-slate-600">Letters, facility access, faults and questions — with a reference you can follow.</p></div>
+  {% if can_create %}<a href="{% url 'service_requests:create' %}" class="btn btn-primary">New request</a>{% endif %}
+</div>
+{% if is_officer %}
+<nav class="mb-3 flex flex-wrap gap-2 text-sm" aria-label="Which requests">
+  <a href="?" class="rounded-full px-3 py-1 {% if not scope %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Queue</a>
+  <a href="?scope=assigned" class="rounded-full px-3 py-1 {% if scope == 'assigned' %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Assigned to me</a>
+  <a href="?scope=mine" class="rounded-full px-3 py-1 {% if scope == 'mine' %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Mine</a>
+</nav>
+{% endif %}
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter by status">
+  <a href="?{% if scope %}scope={{ scope }}{% endif %}" class="rounded-full px-3 py-1 {% if not status %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">All</a>
+  {% for v, l in statuses %}<a href="?status={{ v }}{% if scope %}&scope={{ scope }}{% endif %}" class="rounded-full px-3 py-1 {% if status == v %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">{{ l }}</a>{% endfor %}
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Request</th><th>Submitted</th><th>Assigned to</th><th>Priority</th><th>Status</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in page %}
+      <tr class="hover:bg-slate-50">
+        <td>
+          <a href="{% url 'service_requests:detail' r.pk %}" class="font-medium text-brand-700 hover:underline">{{ r.title }}</a>
+          <p class="text-xs text-slate-500">{{ r.request_type|cut:"_"|capfirst }}{% if r.is_restricted %} · <span class="text-violet-700">private</span>{% endif %}{% if r.is_overdue %} · <span class="text-red-600">overdue</span>{% endif %}</p>
+        </td>
+        <td>{{ r.submitted_at|date:"j M Y" }}</td>
+        <td>{{ r.assigned_to_user.display_name|default:"—" }}</td>
+        <td>{% status_badge r.priority %}</td>
+        <td>{% status_badge r.request_status %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="5" class="py-10 text-center text-slate-500">No requests.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

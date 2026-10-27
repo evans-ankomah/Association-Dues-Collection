@@ -1,0 +1,23 @@
+{% if term and not results %}
+<p class="text-sm text-slate-500">No members match “{{ term }}”.</p>
+{% else %}
+<ul class="divide-y divide-slate-100">
+  {% for m in results %}
+  <li class="flex items-center justify-between gap-3 py-2">
+    <div>
+      <p class="text-sm font-medium">{{ m.user.display_name }}</p>
+      <p class="text-xs text-slate-500">{{ m.level_code|default:"—" }}{% if m.user.profile.student_number %} · {{ m.user.profile.student_number }}{% endif %}</p>
+    </div>
+    {% if m.pk in checked_in %}
+    <span class="badge bg-brand-100 text-brand-800">Checked in</span>
+    {% else %}
+    <form method="post" action="{% url 'events:check_in' event.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="membership" value="{{ m.pk }}">
+      <button class="btn btn-primary px-3 py-1 text-xs">Check in</button>
+    </form>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}

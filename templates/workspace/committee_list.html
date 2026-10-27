@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Committees · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Committees</h1><p class="mt-1 text-sm text-slate-600">{{ current_session }} · a new session means new committees, so handover is recorded.</p></div>
+  <a href="{% url 'workspace:committee_create' %}" class="btn btn-primary">New committee</a>
+</div>
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {% for c in committees %}
+  <a href="{% url 'workspace:committee' c.pk %}" class="card p-4 hover:border-brand-300">
+    <div class="flex items-start justify-between gap-3">
+      <h2 class="font-medium text-brand-700">{{ c.name }}</h2>
+      {% status_badge c.committee_status %}
+    </div>
+    {% if c.description %}<p class="mt-2 text-sm text-slate-600">{{ c.description|truncatewords:18 }}</p>{% endif %}
+    <p class="mt-3 text-xs text-slate-500">Chair: {{ c.chair_membership.user.display_name|default:"not set" }}</p>
+  </a>
+  {% empty %}
+  <p class="text-slate-500">No committees for this session yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ meeting.title }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'workspace:meetings' %}" class="text-sm text-brand-700 hover:underline">← Meetings</a>
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ meeting.title }} {% status_badge meeting.meeting_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ meeting.scheduled_at|date:"j M Y, H:i" }}{% if meeting.location_text %} · {{ meeting.location_text }}{% endif %} · {{ meeting.committee.name|default:"Executive" }}</p>
+</div>
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Minutes</h2>
+      {% if meeting.minutes_document %}
+      <p class="mt-2 text-sm"><a href="{% url 'documents:detail' meeting.minutes_document.pk %}" class="text-brand-700 hover:underline">{{ meeting.minutes_document.title }}</a> · {{ meeting.minutes_document.size_display }}</p>
+      {% else %}
+      <p class="mt-2 text-sm text-slate-500">Not attached yet.</p>
+      {% endif %}
+    </section>
+    {% if tasks %}
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Action items</h2>
+      <table class="table-base mt-2"><tbody class="divide-y divide-slate-100">
+        {% for t in tasks %}<tr><td class="whitespace-normal">{{ t.title }}</td><td>{{ t.assigned_to_user.display_name|default:"—" }}</td><td>{{ t.due_at|date:"j M"|default:"—" }}</td><td>{% status_badge t.task_status %}</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+    {% endif %}
+  </div>
+  <aside class="space-y-4">
+    <form method="post" action="{% url 'workspace:meeting_action' meeting.pk %}" class="card space-y-3 p-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold">Attach minutes</h2>
+      <label for="document" class="field-label">Document</label>
+      <select id="document" name="document" class="field-input" required>
+        {% for d in minutes_choices %}<option value="{{ d.pk }}">{{ d.title }} · {{ d.uploaded_at|date:"j M Y" }}</option>{% empty %}<option value="">Upload a minutes document first</option>{% endfor %}
+      </select>
+      <button name="action" value="minutes" class="btn btn-primary w-full">Attach</button>
+      <p class="text-xs text-slate-500">Upload it under Documents with the category “Meeting minutes”.</p>
+    </form>
+    <form method="post" action="{% url 'workspace:meeting_action' meeting.pk %}" class="card space-y-2 p-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold">Status</h2>
+      <a href="{% url 'workspace:meeting_edit' meeting.pk %}" class="btn btn-secondary w-full">Edit</a>
+      {% if meeting.meeting_status == "scheduled" %}
+      <button name="action" value="held" class="btn btn-primary w-full">Mark held</button>
+      <button name="action" value="cancelled" class="btn btn-secondary w-full">Cancel meeting</button>
+      {% endif %}
+    </form>
+  </aside>
+</div>
+{% endblock %}

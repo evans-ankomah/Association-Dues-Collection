@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ committee.name }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'workspace:committees' %}" class="text-sm text-brand-700 hover:underline">← Committees</a>
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ committee.name }} {% status_badge committee.committee_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ committee.academic_session }} · chaired by {{ committee.chair_membership.user.display_name|default:"nobody yet" }}</p>
+</div>
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    {% if committee.description %}
+    <section class="card p-4"><h2 class="text-sm font-semibold text-slate-700">Remit</h2><p class="mt-2 whitespace-pre-line text-sm">{{ committee.description }}</p></section>
+    {% endif %}
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Members</h2>
+      <table class="table-base mt-2">
+        <thead><tr><th>Member</th><th>Role</th><th>Joined</th><th>Status</th><th></th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for m in members %}
+          <tr>
+            <td>{{ m.department_membership.user.display_name }}</td>
+            <td>{{ m.role_title|default:"Member" }}</td>
+            <td>{{ m.joined_at|date:"j M Y" }}</td>
+            <td>{% status_badge m.membership_status %}</td>
+            <td>
+              {% if m.membership_status == "active" %}
+              <form method="post" action="{% url 'workspace:committee_action' committee.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="end_member">
+                <input type="hidden" name="seat" value="{{ m.pk }}">
+                <button class="btn btn-secondary px-2 py-1 text-xs">End seat</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}<tr><td colspan="5" class="py-6 text-center text-slate-500">Nobody yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% if tasks %}
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Tasks</h2>
+      <table class="table-base mt-2"><tbody class="divide-y divide-slate-100">
+        {% for t in tasks %}<tr><td class="whitespace-normal">{{ t.title }}</td><td>{{ t.assigned_to_user.display_name|default:"—" }}</td><td>{% status_badge t.task_status %}</td></tr>{% endfor %}
+      </tbody></table>
+    </section>
+    {% endif %}
+  </div>
+  <aside class="space-y-4">
+    {% if committee.committee_status != "archived" %}
+    <form method="post" action="{% url 'workspace:committee_action' committee.pk %}" class="card space-y-3 p-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold">Add a member</h2>
+      <label for="membership" class="field-label">Member</label>
+      <select id="membership" name="membership" class="field-input" required>
+        {% for m in candidates %}<option value="{{ m.pk }}">{{ m.user.display_name }}{% if m.level_code %} · {{ m.level_code }}{% endif %}</option>{% endfor %}
+      </select>
+      <label for="role_title" class="field-label">Role</label>
+      <input id="role_title" name="role_title" class="field-input" placeholder="Member, Secretary…">
+      <button name="action" value="add_member" class="btn btn-primary w-full">Add</button>
+    </form>
+    {% endif %}
+    <section class="card space-y-3 p-4">
+      <h2 class="text-sm font-semibold">Committee</h2>
+      <a href="{% url 'workspace:committee_edit' committee.pk %}" class="btn btn-secondary w-full">Edit</a>
+      <form method="post" action="{% url 'workspace:committee_action' committee.pk %}" x-data="{ confirm: false }">
+        {% csrf_token %}
+        {% if committee.committee_status == "active" %}
+        <button type="button" x-show="!confirm" @click="confirm = true" class="btn btn-secondary w-full">Archive</button>
+        <button x-show="confirm" x-cloak name="action" value="archived" class="btn btn-danger w-full">Archive and end all seats</button>
+        {% else %}
+        <button name="action" value="active" class="btn btn-secondary w-full">Reactivate</button>
+        {% endif %}
+      </form>
+    </section>
+    {% if meetings %}
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold">Recent meetings</h2>
+      <ul class="mt-2 space-y-1 text-sm">
+        {% for m in meetings %}<li><a href="{% url 'workspace:meeting' m.pk %}" class="text-brand-700 hover:underline">{{ m.title }}</a> <span class="text-xs text-slate-500">{{ m.scheduled_at|date:"j M" }}</span></li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

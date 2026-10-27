@@ -63,7 +63,15 @@ NAV_SECTIONS: list[tuple[str, list[NavItem]]] = [
     ),
     ("Activities", [NavItem("Events", "events:events")]),
     ("Services", [NavItem("Requests", "service_requests:requests")]),
-    ("Workspace", [NavItem("Documents", "documents:documents", ("committees.manage",))]),
+    (
+        "Workspace",
+        [
+            NavItem("Tasks", "workspace:tasks"),
+            NavItem("Committees", "workspace:committees", ("committees.manage",)),
+            NavItem("Meetings", "workspace:meetings", ("committees.manage",)),
+            NavItem("Documents", "documents:documents", ("committees.manage",)),
+        ],
+    ),
     ("Members", [NavItem("Roster", "members:roster", ("members.roster.view", "members.roster.edit"))]),
     ("Account", [NavItem("Profile", "accounts:profile")]),
     ("Administration", [NavItem("Platform admin", "admin:index", platform_admin_only=True)]),

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Tasks · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Tasks</h1><p class="mt-1 text-sm text-slate-600">Who is doing what, and by when.</p></div>
+  {% if is_manager %}<a href="{% url 'workspace:task_create' %}" class="btn btn-primary">New task</a>{% endif %}
+</div>
+{% if summary %}
+<div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="Open" value=summary.tasks_open %}
+  {% include "partials/_stat.html" with label="Overdue" value=summary.tasks_overdue value_class="text-red-600" %}
+  {% include "partials/_stat.html" with label="Unassigned" value=summary.tasks_unassigned %}
+  {% include "partials/_stat.html" with label="Committees" value=summary.committees %}
+</div>
+{% endif %}
+{% if is_manager %}
+<nav class="mb-3 flex flex-wrap gap-2 text-sm" aria-label="Whose tasks">
+  <a href="?" class="rounded-full px-3 py-1 {% if not scope %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Everyone</a>
+  <a href="?scope=mine" class="rounded-full px-3 py-1 {% if scope == 'mine' %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Mine</a>
+</nav>
+{% endif %}
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter by status">
+  <a href="?{% if scope %}scope={{ scope }}{% endif %}" class="rounded-full px-3 py-1 {% if not status %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">All</a>
+  {% for v, l in statuses %}<a href="?status={{ v }}{% if scope %}&scope={{ scope }}{% endif %}" class="rounded-full px-3 py-1 {% if status == v %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">{{ l }}</a>{% endfor %}
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Task</th><th>Owner</th><th>Linked to</th><th>Due</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for t in page %}
+      <tr class="hover:bg-slate-50">
+        <td class="whitespace-normal">
+          {% if is_manager %}<a href="{% url 'workspace:task_edit' t.pk %}" class="font-medium text-brand-700 hover:underline">{{ t.title }}</a>{% else %}<span class="font-medium">{{ t.title }}</span>{% endif %}
+        </td>
+        <td>{{ t.assigned_to_user.display_name|default:"—" }}</td>
+        <td class="whitespace-normal text-xs text-slate-500">{% if t.committee %}{{ t.committee.name }}{% elif t.event %}{{ t.event.title }}{% elif t.meeting %}{{ t.meeting.title }}{% else %}—{% endif %}</td>
+        <td class="{% if t.is_overdue %}text-red-600{% endif %}">{{ t.due_at|date:"j M Y"|default:"—" }}</td>
+        <td>{% status_badge t.priority %}</td>
+        <td>{% status_badge t.task_status %}</td>
+        <td>
+          {% if t.is_open %}
+          <form method="post" action="{% url 'workspace:task_action' t.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="status">
+            <input type="hidden" name="status" value="done">
+            <button class="btn btn-secondary px-2 py-1 text-xs">Done</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="7" class="py-10 text-center text-slate-500">Nothing to do.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

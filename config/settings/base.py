@@ -43,6 +43,7 @@ LOCAL_APPS = [
     "apps.service_requests",
     "apps.documents",
     "apps.workspace",
+    "apps.resources",
     "apps.reporting",
     "apps.api",
 ]

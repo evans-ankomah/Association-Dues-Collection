@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Bookings · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Bookings</h1><p class="mt-1 text-sm text-slate-600">Who has what, and when.</p></div>
+  <a href="{% url 'resources:assets' %}" class="btn btn-secondary">Assets</a>
+</div>
+{% if can_manage %}
+<nav class="mb-3 flex flex-wrap gap-2 text-sm" aria-label="Whose bookings">
+  <a href="?" class="rounded-full px-3 py-1 {% if not scope %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Everyone</a>
+  <a href="?scope=mine" class="rounded-full px-3 py-1 {% if scope == 'mine' %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">Mine</a>
+</nav>
+{% endif %}
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter by status">
+  <a href="?{% if scope %}scope={{ scope }}{% endif %}" class="rounded-full px-3 py-1 {% if not status %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">All</a>
+  {% for v, l in statuses %}<a href="?status={{ v }}{% if scope %}&scope={{ scope }}{% endif %}" class="rounded-full px-3 py-1 {% if status == v %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">{{ l }}</a>{% endfor %}
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Asset</th><th>When</th><th>Who</th><th>Status</th><th></th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for b in page %}
+      <tr class="hover:bg-slate-50">
+        <td><a href="{% url 'resources:asset' b.asset.pk %}" class="font-medium text-brand-700 hover:underline">{{ b.asset.name }}</a><p class="text-xs text-slate-500">{{ b.asset.asset_tag }}</p></td>
+        <td>{{ b.starts_at|date:"j M Y, H:i" }} – {{ b.ends_at|date:"j M, H:i" }}</td>
+        <td>{{ b.requested_by_user.display_name }}</td>
+        <td>{% status_badge b.booking_status %}</td>
+        <td>
+          <form method="post" action="{% url 'resources:booking_action' b.pk %}" class="flex flex-wrap gap-1">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            {% if can_manage and b.booking_status == "requested" %}
+            <button name="action" value="approve" class="btn btn-primary px-2 py-1 text-xs">Approve</button>
+            <button name="action" value="reject" class="btn btn-secondary px-2 py-1 text-xs">Reject</button>
+            {% elif can_manage and b.booking_status == "approved" %}
+            <button name="action" value="check_out" class="btn btn-secondary px-2 py-1 text-xs">Check out</button>
+            {% elif can_manage and b.booking_status == "checked_out" %}
+            <button name="action" value="check_in" class="btn btn-primary px-2 py-1 text-xs">Return</button>
+            {% endif %}
+            {% if b.booking_status == "requested" or b.booking_status == "approved" %}
+            <button name="action" value="cancel" class="btn btn-secondary px-2 py-1 text-xs">Cancel</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+      {% empty %}<tr><td colspan="5" class="py-10 text-center text-slate-500">No bookings.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

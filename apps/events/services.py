@@ -13,7 +13,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 
-from apps.access.services import has_perm
+from apps.access.services import has_perm, permission_codes
 from apps.audit.services import record, snapshot
 from apps.memberships.models import DepartmentMembership
 
@@ -34,7 +34,13 @@ def require_perm(actor, code, department):
 
 
 def visible_events(user, department):
-    """Events in `department` the user may see: organisers see every state, members only published."""
+    """Events in `department` the user may see: organisers see every state, members only published.
+
+    A user with no role in `department` sees nothing: holding events.manage somewhere else
+    must not reveal another department's calendar.
+    """
+    if not permission_codes(user, department):
+        return Event.objects.none()
     qs = Event.objects.filter(department=department)
     return qs if has_perm(user, MANAGE, department) else qs.visible_to_members()
 

@@ -1,6 +1,6 @@
 import pytest
 
-from apps.common.tests.factories import DepartmentFactory, MembershipFactory, UserFactory
+from apps.common.tests.factories import UserFactory
 from apps.service_requests.models import ServiceRequest, ServiceRequestComment
 
 pytestmark = pytest.mark.django_db
@@ -115,11 +115,12 @@ def test_member_cannot_change_status_or_assign(make_request, member, login, offi
     assert req.assigned_to_user_id is None
 
 
-def test_officer_cannot_reach_another_departments_request(officer, login, department):
-    other_dept = DepartmentFactory(institution=department.institution)
+def test_officer_cannot_reach_another_departments_request(
+    officer, login, other_department, make_other_membership
+):
     foreign = ServiceRequest.objects.create(
-        department=other_dept,
-        requester_membership=MembershipFactory(department=other_dept),
+        department=other_department,
+        requester_membership=make_other_membership(),
         request_type="admin_question",
         title="Their business",
         description="Not yours.",

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Assets · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div><h1 class="text-2xl font-semibold">Assets</h1><p class="mt-1 text-sm text-slate-600">Equipment, venues and facilities you can book.</p></div>
+  <div class="flex gap-2">
+    <a href="{% url 'resources:bookings' %}" class="btn btn-secondary">Bookings</a>
+    {% if can_manage %}<a href="{% url 'resources:asset_create' %}" class="btn btn-primary">New asset</a>{% endif %}
+  </div>
+</div>
+{% if summary %}
+<div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+  {% include "partials/_stat.html" with label="Assets" value=summary.assets %}
+  {% include "partials/_stat.html" with label="Available" value=summary.available %}
+  {% include "partials/_stat.html" with label="Awaiting decision" value=summary.awaiting_decision %}
+  {% include "partials/_stat.html" with label="Needing repair" value=summary.needing_repair value_class="text-red-600" %}
+</div>
+{% endif %}
+<nav class="mb-4 flex flex-wrap gap-2 text-sm" aria-label="Filter by type">
+  <a href="?" class="rounded-full px-3 py-1 {% if not asset_type %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">All</a>
+  {% for v, l in types %}<a href="?type={{ v }}" class="rounded-full px-3 py-1 {% if asset_type == v %}bg-brand-600 text-white{% else %}bg-white ring-1 ring-slate-200{% endif %}">{{ l }}</a>{% endfor %}
+</nav>
+<div class="card overflow-x-auto">
+  <table class="table-base">
+    <thead><tr><th>Asset</th><th>Type</th><th>Location</th><th>Condition</th><th>Availability</th></tr></thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in page %}
+      <tr class="hover:bg-slate-50">
+        <td>
+          <a href="{% url 'resources:asset' a.pk %}" class="font-medium text-brand-700 hover:underline">{{ a.name }}</a>
+          <p class="text-xs text-slate-500">{{ a.asset_tag }}</p>
+        </td>
+        <td>{{ a.get_asset_type_display }}</td>
+        <td class="whitespace-normal">{{ a.location|default:"—" }}</td>
+        <td>{% status_badge a.condition_status %}</td>
+        <td>{% status_badge a.availability_status %}</td>
+      </tr>
+      {% empty %}<tr><td colspan="5" class="py-10 text-center text-slate-500">No assets.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ asset.name }} · {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'resources:assets' %}" class="text-sm text-brand-700 hover:underline">← Assets</a>
+  <h1 class="mt-1 flex flex-wrap items-center gap-3 text-2xl font-semibold">{{ asset.name }} {% status_badge asset.availability_status %}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ asset.asset_tag }} · {{ asset.get_asset_type_display }}{% if asset.location %} · {{ asset.location }}{% endif %}</p>
+</div>
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    {% if asset.description %}
+    <section class="card p-4"><h2 class="text-sm font-semibold text-slate-700">About</h2><p class="mt-2 whitespace-pre-line text-sm">{{ asset.description }}</p></section>
+    {% endif %}
+    <section class="card overflow-x-auto">
+      <h2 class="px-4 pt-4 text-sm font-semibold text-slate-700">Upcoming bookings</h2>
+      <table class="table-base mt-2">
+        <thead><tr><th>When</th><th>Who</th><th>Purpose</th><th>Status</th>{% if can_manage %}<th></th>{% endif %}</tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for b in bookings %}
+          <tr>
+            <td>{{ b.starts_at|date:"j M, H:i" }} – {{ b.ends_at|date:"j M, H:i" }}</td>
+            <td>{{ b.requested_by_user.display_name }}</td>
+            <td class="whitespace-normal">{{ b.purpose|truncatewords:10 }}</td>
+            <td>{% status_badge b.booking_status %}</td>
+            {% if can_manage %}
+            <td>
+              {% if b.booking_status == "requested" %}
+              <form method="post" action="{% url 'resources:booking_action' b.pk %}" class="flex gap-1">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button name="action" value="approve" class="btn btn-primary px-2 py-1 text-xs">Approve</button>
+                <button name="action" value="reject" class="btn btn-secondary px-2 py-1 text-xs">Reject</button>
+              </form>
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}<tr><td colspan="{% if can_manage %}5{% else %}4{% endif %}" class="py-6 text-center text-slate-500">Nothing booked.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <aside class="space-y-4">
+    <section class="card p-4">
+      <h2 class="text-sm font-semibold text-slate-700">Details</h2>
+      <dl class="mt-3 grid gap-3 text-sm">
+        <div><dt class="text-slate-500">Condition</dt><dd>{% status_badge asset.condition_status %}</dd></div>
+        <div><dt class="text-slate-500">Custodian</dt><dd>{{ asset.custodian_user.display_name|default:"—" }}</dd></div>
+        {% if can_manage and asset.replacement_cost %}<div><dt class="text-slate-500">Replacement cost</dt><dd class="tabular-nums">{{ asset.replacement_cost|money }}</dd></div>{% endif %}
+      </dl>
+      {% if can_manage %}<a href="{% url 'resources:asset_edit' asset.pk %}" class="btn btn-secondary mt-4 w-full">Edit asset</a>{% endif %}
+    </section>
+    {% if can_book %}
+    <form method="post" action="{% url 'resources:book' asset.pk %}" class="card space-y-3 p-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold">Request this asset</h2>
+      {% include "partials/_field.html" with field=form.starts_at %}
+      {% include "partials/_field.html" with field=form.ends_at %}
+      {% include "partials/_field.html" with field=form.purpose %}
+      <button class="btn btn-primary w-full">Request booking</button>
+      <p class="text-xs text-slate-500">A custodian confirms it. Overlapping slots can be requested, but only one is approved.</p>
+    </form>
+    {% elif not asset.is_bookable %}
+    <p class="card p-4 text-sm text-slate-600">This asset is {{ asset.get_availability_status_display|lower }}, so it can't be booked.</p>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

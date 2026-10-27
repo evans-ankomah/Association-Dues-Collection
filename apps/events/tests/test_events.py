@@ -5,8 +5,6 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 
 from apps.common.tests.factories import (
-    AcademicSessionFactory,
-    DepartmentFactory,
     MembershipFactory,
     UserFactory,
 )
@@ -156,30 +154,23 @@ def test_member_cannot_cancel_another_members_registration(event, member, make_m
         svc.cancel_registration(registration, actor=member)
 
 
-def test_organiser_cannot_register_a_member_of_another_department(event, organiser, department):
-    other_dept = DepartmentFactory(institution=department.institution)
-    other_session = AcademicSessionFactory(institution=department.institution, is_current=False, name="x")
-    foreign = MembershipFactory(department=other_dept, academic_session=other_session)
+def test_organiser_cannot_register_a_member_of_another_department(event, organiser, make_other_membership):
     with pytest.raises(EventError, match="another department"):
-        svc.register(event, actor=organiser, membership=foreign)
+        svc.register(event, actor=organiser, membership=make_other_membership())
 
 
-def test_organiser_cannot_check_in_a_member_of_another_department(event, organiser, department):
-    other_dept = DepartmentFactory(institution=department.institution)
-    other_session = AcademicSessionFactory(institution=department.institution, is_current=False, name="y")
-    foreign = MembershipFactory(department=other_dept, academic_session=other_session)
+def test_organiser_cannot_check_in_a_member_of_another_department(event, organiser, make_other_membership):
     with pytest.raises(EventError, match="another department"):
-        svc.check_in(event, actor=organiser, membership=foreign)
+        svc.check_in(event, actor=organiser, membership=make_other_membership())
 
 
-def test_permissions_do_not_leak_to_other_departments(organiser, department):
+def test_permissions_do_not_leak_to_other_departments(organiser, other_department, make_other_membership):
     """events.manage in one department grants nothing in another."""
-    other = DepartmentFactory(institution=department.institution)
-    foreign_event = EventFactory(department=other, created_by=UserFactory())
+    foreign_event = EventFactory(department=other_department, created_by=UserFactory())
     with pytest.raises(PermissionDenied):
         svc.publish(foreign_event, actor=organiser)
     with pytest.raises(PermissionDenied):
-        svc.check_in(foreign_event, actor=organiser, membership=MembershipFactory(department=other))
+        svc.check_in(foreign_event, actor=organiser, membership=make_other_membership())
     assert not svc.can_view(organiser, foreign_event)
 
 

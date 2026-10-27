@@ -1,6 +1,6 @@
 import pytest
 
-from apps.common.tests.factories import DepartmentFactory, MembershipFactory, UserFactory
+from apps.common.tests.factories import UserFactory
 from apps.events.models import Event, EventAttendance, EventRegistration
 
 from .factories import EventFactory
@@ -39,9 +39,8 @@ def test_member_cannot_check_anyone_in_over_http(event, member, membership, logi
     assert not EventAttendance.objects.exists()
 
 
-def test_organiser_cannot_reach_another_departments_event(organiser, login, department):
-    other_dept = DepartmentFactory(institution=department.institution)
-    foreign = EventFactory(department=other_dept, created_by=UserFactory())
+def test_organiser_cannot_reach_another_departments_event(organiser, login, other_department):
+    foreign = EventFactory(department=other_department, created_by=UserFactory())
     client = login(organiser)
     assert client.get(f"/events/{foreign.pk}/").status_code == 404
     assert client.get(f"/events/{foreign.pk}/edit/").status_code == 404
@@ -49,18 +48,18 @@ def test_organiser_cannot_reach_another_departments_event(organiser, login, depa
     assert client.post(f"/events/{foreign.pk}/action/", {"action": "publish"}).status_code == 404
 
 
-def test_organiser_cannot_cancel_a_foreign_registration(organiser, login, department):
-    other_dept = DepartmentFactory(institution=department.institution)
-    foreign = EventFactory(department=other_dept, created_by=UserFactory())
+def test_organiser_cannot_cancel_a_foreign_registration(
+    organiser, login, other_department, make_other_membership
+):
+    foreign = EventFactory(department=other_department, created_by=UserFactory())
     registration = EventRegistration.objects.create(
-        event=foreign, department_membership=MembershipFactory(department=other_dept)
+        event=foreign, department_membership=make_other_membership()
     )
     assert login(organiser).post(f"/events/registrations/{registration.pk}/cancel/").status_code == 404
 
 
-def test_organiser_cannot_check_in_a_foreign_member(event, organiser, login, department):
-    other_dept = DepartmentFactory(institution=department.institution)
-    foreign = MembershipFactory(department=other_dept)
+def test_organiser_cannot_check_in_a_foreign_member(event, organiser, login, make_other_membership):
+    foreign = make_other_membership()
     response = login(organiser).post(
         f"/events/{event.pk}/attendance/check-in/", {"membership": str(foreign.pk)}
     )
@@ -68,10 +67,11 @@ def test_organiser_cannot_check_in_a_foreign_member(event, organiser, login, dep
     assert not EventAttendance.objects.exists()
 
 
-def test_member_search_only_returns_own_department(event, organiser, login, department, make_membership):
+def test_member_search_only_returns_own_department(
+    event, organiser, login, make_membership, make_other_membership
+):
     mine = make_membership(user=UserFactory(with_profile__given_name="Akosua"))
-    other_dept = DepartmentFactory(institution=department.institution)
-    MembershipFactory(department=other_dept, user=UserFactory(with_profile__given_name="Akosua"))
+    make_other_membership(user=UserFactory(with_profile__given_name="Akosua"))
     body = login(organiser).get(f"/events/{event.pk}/attendance/search/?q=Akosua").content.decode()
     assert str(mine.pk) in body
     assert body.count('name="membership"') == 1
